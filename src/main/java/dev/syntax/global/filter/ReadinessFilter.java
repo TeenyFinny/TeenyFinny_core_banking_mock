@@ -1,20 +1,22 @@
 package dev.syntax.global.filter;
 
-import org.springframework.boot.availability.ReadinessState;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.boot.availability.ApplicationAvailability;
+import org.springframework.boot.availability.ReadinessState;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
 import java.io.IOException;
 
 /**
  * 트래픽 종료(드레이닝) 상태에서 일반 요청을 503(Service Unavailable)로 차단하는 서블릿 필터.
  *
  * <p>
- * Spring Boot의 {@link org.springframework.boot.availability.ApplicationAvailability} 를 통해
- * 현재 애플리케이션의 {@link org.springframework.boot.availability.ReadinessState} 를 조회하고,
+ * Spring Boot의 {@link ApplicationAvailability} 를 통해
+ * 현재 애플리케이션의 {@link ReadinessState} 를 조회하고,
  * 상태가 {@code REFUSING_TRAFFIC} 인 경우 일반 엔드포인트 요청을 거부합니다.
  * 운영 중 배포/종료 과정에서 안전하게 트래픽을 배출(draining)할 때 사용합니다.
  * </p>
