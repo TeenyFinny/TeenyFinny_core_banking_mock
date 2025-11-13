@@ -5,8 +5,6 @@ pipeline {
         REGISTRY   = 'docker.io'
         MAIN_IMAGE_NAME = 'TeenyFinny/core'
         DEV_IMAGE_NAME = 'TeenyFinny/coretest'
-        DOCKERHUB_USER = 'TeenyFinny'
-        DOCKERHUB_CRED = credentials('docker-hub')
     }
 
     stages {
@@ -73,10 +71,14 @@ pipeline {
 
         stage('CD : push to docker hub') {
         		steps {
-        		  withCredentials([usernamePassword(credentialsId: 'docker-hub',
-        		                                    usernameVariable: 'REG_USER',
-        		                                    passwordVariable: 'REG_PASS')]) {
-        		    sh(label: 'Docker login', script: 'echo "$DOCKERHUB_CRED_PSW" | docker login $REGISTRY -u "$REG_USER" --password-stdin')
+        		  withCredentials([usernamePassword(
+                      credentialsId: 'docker-hub',
+                      usernameVariable: 'REG_USER',
+                      passwordVariable: 'REG_PASS'
+                  )]){
+        		    sh '''
+                            echo "$REG_PASS" | docker login -u "$REG_USER" --password-stdin
+                        '''
         		    script {
                         if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
                             sh(label: 'Docker build & push (latest)', script: '''
