@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         REGISTRY   = 'docker.io'
-        MAIN_IMAGE_NAME = 'docker.io/TeenyFinny/core'
-        DEV_IMAGE_NAME = 'docker.io/TeenyFinny/coretest'
+        MAIN_IMAGE_NAME = 'docker.io/teenyfinny/core'
+        DEV_IMAGE_NAME = 'docker.io/teenyfinny/coretest'
     }
 
     stages {
