@@ -14,12 +14,6 @@ pipeline {
                 cleanWs()
                 checkout scm // 자동으로 webhook 브랜치를 체크아웃
                 sh 'ls -al' // 디버깅용
-                sshagent(credentials: ['github-core-banking']) { // Jenkins Credentials ID
-                    sh '''
-                    GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" \
-                    git clone --depth=1 --branch main git@github.com:TeenyFinny/TeenyFinny_core_banking_mock.git .
-                    '''
-                }
             }
         }
 
