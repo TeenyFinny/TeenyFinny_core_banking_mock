@@ -24,7 +24,7 @@ pipeline {
                 sshagent(credentials: ['github-core-banking']) { // Jenkins Credentials ID
                     sh '''
                     GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" \
-                    git clone --depth=1 --branch main git@github.com/TeenyFinny/TeenyFinny_core_banking_mock.git .
+                    git clone --depth=1 --branch main git@github.com:TeenyFinny/TeenyFinny_core_banking_mock.git .
                     '''
                 }
             }
