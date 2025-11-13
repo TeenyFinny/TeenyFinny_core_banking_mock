@@ -18,7 +18,7 @@ pipeline {
             }
         }
 
-        stage('checkout') {
+        stage('CI : checkout') {
             steps {
                 cleanWs()
                 sshagent(credentials: ['github-core-banking']) { // Jenkins Credentials ID
@@ -38,6 +38,43 @@ pipeline {
 
                 ./gradlew clean build
                 '''
+            }
+        }
+
+        stage('CI : SonarQube analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube-admin') {
+                    sh '''
+                    set -euxo pipefail
+                    chmod +x ./gradlew
+
+                    echo '===== sonarqube 서버, 토큰 유효성 검증 ====='
+                    curl http://sonarqube:9000/api/server/version
+                    curl -sS -u "$SONAR_AUTH_TOKEN": http://sonarqube:9000/api/authentication/validate
+                    curl -sS -u "$SONAR_AUTH_TOKEN": "http://sonarqube:9000/api/projects/search?projects=test"
+
+                    ./gradlew sonar -Dsonar.token=$SONAR_AUTH_TOKEN -Dsonar.host.url=$SONAR_HOST_URL
+                    '''
+                }
+            }
+        }
+
+        stage('CI : Quality Gate') {
+            steps{
+                timeout(time: 1, unit: 'MINUTES') {
+                    script{
+                        echo "Start"
+                        def qg = waitForQualityGate()
+                        echo "Status: ${qg.status}"
+                        if(qg.status != 'OK') {
+                            echo "NOT OK Status: ${qg.status}"
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                        } else{
+                            echo "status: ${qg.status}"
+                        }
+                        echo "End"
+                    }
+                }
             }
         }
 
