@@ -43,7 +43,7 @@ pipeline {
 
         stage('CI : SonarQube analysis') {
             steps {
-                withSonarQubeEnv('sonarqube-admin') {
+                withSonarQubeEnv('sonarqube-server') {
                     sh '''
                     set -euxo pipefail
                     chmod +x ./gradlew
