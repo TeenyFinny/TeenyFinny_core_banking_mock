@@ -21,7 +21,7 @@ pipeline {
         stage('checkout') {
             steps {
                 cleanWs()
-                sshagent(credentials: ['a70f1bb2-9116-4626-b231-c0bc7e17d257']) { // Jenkins Credentials ID
+                sshagent(credentials: ['github-core-banking']) { // Jenkins Credentials ID
                     sh '''
                     GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" \
                     git clone --depth=1 --branch main git@github.com:JBL28/test.git .
