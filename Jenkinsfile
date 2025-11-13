@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('CI : checkout') {
             steps {
-                echo '빌드 시작됨!'
+                echo '빌드 시작됨!!'
                 cleanWs()
                 sshagent(credentials: ['github-core-banking']) { // Jenkins Credentials ID
                     sh '''
