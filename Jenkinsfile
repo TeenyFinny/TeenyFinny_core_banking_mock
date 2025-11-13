@@ -1,25 +1,16 @@
 pipeline {
     agent any
 
+    environment {
+        REGISTRY   = 'docker.io'
+        MAIN_IMAGE_NAME = 'TeenyFinny/Core'
+        DEV_IMAGE_NAME = 'TeenyFinny/CoreTest'
+    }
+
     stages {
-
-        stage('Build Start') {
-            steps {
-                echo '빌드 시작됨!'
-
-                script {
-                    // 멀티브랜치면 BRANCH_NAME, 일반 파이프라인이면 GIT_BRANCH에 들어가는 경우가 많아서 둘 다 확인
-                    def branch = env.GIT_BRANCH
-
-                    if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
-                        echo '야호'
-                    }
-                }
-            }
-        }
-
         stage('CI : checkout') {
             steps {
+                echo '빌드 시작됨!'
                 cleanWs()
                 sshagent(credentials: ['github-core-banking']) { // Jenkins Credentials ID
                     sh '''
@@ -77,6 +68,40 @@ pipeline {
                 }
             }
         }
+
+        stage('CD : push to docker hub') {
+        		steps {
+        		  withCredentials([usernamePassword(credentialsId: 'docker-hub',
+        		                                    usernameVariable: 'REG_USER',
+        		                                    passwordVariable: 'REG_PASS')]) {
+        		    sh(label: 'Docker login', script: 'echo "$REG_PASS" | docker login $REGISTRY -u "$REG_USER" --password-stdin')
+        		    if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
+                        sh(label: 'Docker build & push (latest)', script: '''
+                          set -euxo pipefail
+                          docker build -t ${DEV_IMAGE_NAME}:latest .
+                          docker push  ${DEV_IMAGE_NAME}:latest
+                        ''')
+                    }
+
+                    if (branch == 'dev' || branch == 'origin/dev') {
+                        sh(label: 'Docker build & push (latest)', script: '''
+                          set -euxo pipefail
+                          docker build -t ${DEV_IMAGE_NAME}:latest .
+                          docker push  ${DEV_IMAGE_NAME}:latest
+                        ''')
+                    }
+
+                    if (branch == 'main' || branch == 'origin/main') {
+                        sh(label: 'Docker build & push (latest)', script: '''
+                          set -euxo pipefail
+                          docker build -t ${MAIN_IMAGE_NAME}:latest .
+                          docker push  ${MAIN_IMAGE_NAME}:latest
+                        ''')
+                    }
+
+        		  }
+        		}
+        	}
 
     } // end of stages
 } // end of pipeline
