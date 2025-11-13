@@ -71,10 +71,10 @@ pipeline {
 
         stage('CD : push to docker hub') {
         		steps {
-        		  docker.withRegistry('', 'docker-hub') {
-                      docker.image("${env.IMAGE_NAME}").push()
-                  }
         		    script {
+        		    docker.withRegistry('', 'docker-hub') {
+                                          docker.image("${env.IMAGE_NAME}").push()
+                                      }
                         if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
                             sh(label: 'Docker build & push (latest)', script: '''
                               set -euxo pipefail
