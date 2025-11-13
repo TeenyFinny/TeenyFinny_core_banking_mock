@@ -71,10 +71,16 @@ pipeline {
 
         stage('CD : push to docker hub') {
         		steps {
+        		  withCredentials([usernamePassword(
+                      credentialsId: 'docker-hub',
+                      usernameVariable: 'REG_USER',
+                      passwordVariable: 'REG_PASS'
+                  )]){
+
+        		    sh '''
+                            echo $REG_PASS | docker login -u $REG_USER --password-stdin
+                        '''
         		    script {
-        		    docker.withRegistry('', 'docker-hub') {
-                                          docker.image("${env.IMAGE_NAME}").push()
-                                      }
                         if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
                             sh(label: 'Docker build & push (latest)', script: '''
                               set -euxo pipefail
@@ -99,7 +105,7 @@ pipeline {
                             ''')
                         }
                     }
-
+        		  }
         		}
         	}
 
