@@ -75,30 +75,31 @@ pipeline {
         		                                    usernameVariable: 'REG_USER',
         		                                    passwordVariable: 'REG_PASS')]) {
         		    sh(label: 'Docker login', script: 'echo "$REG_PASS" | docker login $REGISTRY -u "$REG_USER" --password-stdin')
-        		    if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
-                        sh(label: 'Docker build & push (latest)', script: '''
-                          set -euxo pipefail
-                          docker build -t ${DEV_IMAGE_NAME}:latest .
-                          docker push  ${DEV_IMAGE_NAME}:latest
-                        ''')
-                    }
+        		    script {
+                        if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
+                            sh(label: 'Docker build & push (latest)', script: '''
+                              set -euxo pipefail
+                              docker build -t ${DEV_IMAGE_NAME}:latest .
+                              docker push  ${DEV_IMAGE_NAME}:latest
+                            ''')
+                        }
 
-                    if (branch == 'dev' || branch == 'origin/dev') {
-                        sh(label: 'Docker build & push (latest)', script: '''
-                          set -euxo pipefail
-                          docker build -t ${DEV_IMAGE_NAME}:latest .
-                          docker push  ${DEV_IMAGE_NAME}:latest
-                        ''')
-                    }
+                        if (branch == 'dev' || branch == 'origin/dev') {
+                            sh(label: 'Docker build & push (latest)', script: '''
+                              set -euxo pipefail
+                              docker build -t ${DEV_IMAGE_NAME}:latest .
+                              docker push  ${DEV_IMAGE_NAME}:latest
+                            ''')
+                        }
 
-                    if (branch == 'main' || branch == 'origin/main') {
-                        sh(label: 'Docker build & push (latest)', script: '''
-                          set -euxo pipefail
-                          docker build -t ${MAIN_IMAGE_NAME}:latest .
-                          docker push  ${MAIN_IMAGE_NAME}:latest
-                        ''')
+                        if (branch == 'main' || branch == 'origin/main') {
+                            sh(label: 'Docker build & push (latest)', script: '''
+                              set -euxo pipefail
+                              docker build -t ${MAIN_IMAGE_NAME}:latest .
+                              docker push  ${MAIN_IMAGE_NAME}:latest
+                            ''')
+                        }
                     }
-
         		  }
         		}
         	}
