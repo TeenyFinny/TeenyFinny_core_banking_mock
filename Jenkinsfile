@@ -12,6 +12,8 @@ pipeline {
             steps {
                 echo '빌드 시작됨!!'
                 cleanWs()
+                checkout scm // 자동으로 webhook 브랜치를 체크아웃
+                sh 'ls -al' // 디버깅용
                 sshagent(credentials: ['github-core-banking']) { // Jenkins Credentials ID
                     sh '''
                     GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" \
