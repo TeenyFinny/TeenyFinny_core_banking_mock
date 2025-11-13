@@ -43,7 +43,7 @@ public class SampleController {
         } else if (flag == 2) {
             // 원한다면 data 항목에 성공 메시지를 추가해줄 수도 있습니다.
             log.info("성공 status와 메시지 응답!");
-            res = ApiResponseUtil.success(SuccessCode.OK, "성공!");
+            res = ApiResponseUtil.success(SuccessCode.OK, "성공입니다잉!");
 
         } else if (flag == 3) {
             // ApiResponseUtil.success에 성공 코드와 DTO를 넣어주면 api 형식에 맞게 응답이 생성됩니다.
