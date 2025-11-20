@@ -143,10 +143,10 @@ docker logs --tail=50 "${TEST_APP_NAME}" || true
                     if (branch == 'dev' || branch == 'origin/dev') {
                         sh('''
 # 2) 요청이 들어오는 것을 차단하고 남은 요청 처리
-curl -s -XPOST http://sw_team_3_core:${TEST_PORT}/internal/readiness/off || true
+curl -s -XPOST http://sw_team_3_core:8080/internal/readiness/off || true
 
-curl -s http://sw_team_3_core:${TEST_PORT}/actuator/drain
-until curl -s http://sw_team_3_core:${TEST_PORT}/actuator/drain | jq -e '.drained == true' >/dev/null 2>&1; do
+curl -s http://sw_team_3_core:8080/actuator/drain
+until curl -s http://sw_team_3_core:8080/actuator/drain | jq -e '.drained == true' >/dev/null 2>&1; do
 echo "Waiting to drain..."; sleep 1
 done
 
