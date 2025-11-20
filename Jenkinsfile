@@ -117,37 +117,40 @@ pipeline {
 
                     if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
                         sh('''
-# 1) readiness OFF 요청 보내고 응답 출력
-echo "[readiness/off] request"
-curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
-echo ""  # 줄바꿈
 
-# 2) drain 루프 - 타임아웃 추가 (최대 30초)
-echo "[drain] start polling (max 30 seconds)..."
-timeout=30
-elapsed=0
+# 0) 헬스체크 - 서버가 살아있는지 확인
+echo "[health-check] Checking server health..."
+health_status=$(curl -s --connect-timeout 2 --max-time 3 "http://192.168.0.79:8261/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
 
-while [ $elapsed -lt $timeout ]; do
-  resp="$(curl -s --connect-timeout 2 --max-time 3 "http://192.168.0.79:8261/actuator/drain" 2>/dev/null)"
+if [ "$health_status" = "UP" ]; then
+  echo "[health-check] Server is healthy. Proceeding with graceful shutdown..."
   
-  if [ -n "$resp" ]; then
+  # 1) readiness OFF 요청 보내고 응답 출력
+  echo "[readiness/off] request"
+  curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
+  echo ""
+  
+  # 2) drain 루프 - 매번 응답 JSON 출력
+  echo "[drain] start polling..."
+  while true; do
+    resp="$(curl -s "http://192.168.0.79:8261/actuator/drain")"
     echo "[drain] response: ${resp}"
+  
     echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
       echo "[drain] drained == true, continue pipeline."
       break
     }
-  else
-    echo "[drain] No response from server (server might be down)"
-  fi
+    
+    echo "[drain] Waiting to drain..."
+    sleep 1
+  done
+else
+  echo "[health-check] Server is unhealthy or down (status: ${health_status}). Skipping graceful shutdown."
+fi
 
-  echo "[drain] Waiting to drain... (${elapsed}s/${timeout}s)"
-  sleep 1
-  elapsed=$((elapsed + 1))
-done
-
+# 3) 기존 컨테이너 삭제
 docker rm -f ${TEST_APP_NAME} || true
 
-# 3) 새 컨테이너 실행 (백그라운드)
 docker run -d \
     --name ${TEST_APP_NAME} \
     --restart unless-stopped \
@@ -157,7 +160,7 @@ docker run -d \
     -p ${TEST_PORT}:8080 \
     ${DEV_IMAGE_NAME}:latest
 
-# 4) 상태 확인
+# 5) 상태 확인
 docker ps --filter "name=${TEST_APP_NAME}"
 docker logs --tail=50 "${TEST_APP_NAME}" || true
                         ''')
