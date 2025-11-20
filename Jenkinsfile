@@ -128,7 +128,7 @@ if [ "$health_status" = "UP" ]; then
   # 1) readiness OFF 요청 보내고 응답 출력
   echo "[readiness/off] request"
   curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
-  echo ""
+  echo ""  # 줄바꿈
   
   # 2) drain 루프 - 매번 응답 JSON 출력
   echo "[drain] start polling..."
@@ -144,21 +144,14 @@ if [ "$health_status" = "UP" ]; then
     echo "[drain] Waiting to drain..."
     sleep 1
   done
-else
-  echo "[health-check] Server is unhealthy or down (status: ${health_status}). Skipping graceful shutdown."
-fi
 
-# 3) 기존 컨테이너 삭제
+# 4) 새 컨테이너 실행 (백그라운드)
 docker rm -f ${TEST_APP_NAME} || true
 
-docker run -d \
-    --name ${TEST_APP_NAME} \
-    --restart unless-stopped \
-    -e TZ=Asia/Seoul \
-    -e SPRING_PROFILES_ACTIVE=secret \
-    -v /home/sw_team_3/backend/core/application-secret.yml:/config/application-secret.yml \
-    -p ${TEST_PORT}:8080 \
-    ${DEV_IMAGE_NAME}:latest
+cd /home/sw_team_3/backend
+
+# 새 이미지 pull or build 까지 해놓고
+docker compose up -d app-local-2
 
 # 5) 상태 확인
 docker ps --filter "name=${TEST_APP_NAME}"
