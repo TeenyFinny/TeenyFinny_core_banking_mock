@@ -1,7 +1,7 @@
 package dev.syntax.domain.user.repository;
 
-import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.entity.CoreUserRelationship;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CoreUserRelationshipRepository extends JpaRepository<CoreUser, Long> {
+public interface CoreUserRelationshipRepository extends JpaRepository<CoreUserRelationship, Long> {
 }
