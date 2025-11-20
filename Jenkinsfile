@@ -117,30 +117,37 @@ pipeline {
 
                     if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
                         sh('''
-# 2) 요청이 들어오는 것을 차단하고 남은 요청 처리
 # 1) readiness OFF 요청 보내고 응답 출력
 echo "[readiness/off] request"
 curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
 echo ""  # 줄바꿈
 
-# 2) drain 루프 - 매번 응답 JSON 출력
-echo "[drain] start polling..."
-while true; do
-  resp="$(curl -s "http://192.168.0.79:8261/actuator/drain")"
-  echo "[drain] response: ${resp}"
+# 2) drain 루프 - 타임아웃 추가 (최대 30초)
+echo "[drain] start polling (max 30 seconds)..."
+timeout=30
+elapsed=0
 
-  echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
-    echo "[drain] drained == true, continue pipeline."
-    break
-  }
+while [ $elapsed -lt $timeout ]; do
+  resp="$(curl -s --connect-timeout 2 --max-time 3 "http://192.168.0.79:8261/actuator/drain" 2>/dev/null)"
+  
+  if [ -n "$resp" ]; then
+    echo "[drain] response: ${resp}"
+    echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
+      echo "[drain] drained == true, continue pipeline."
+      break
+    }
+  else
+    echo "[drain] No response from server (server might be down)"
+  fi
 
-  echo "[drain] Waiting to drain..."
+  echo "[drain] Waiting to drain... (${elapsed}s/${timeout}s)"
   sleep 1
+  elapsed=$((elapsed + 1))
 done
 
 docker rm -f ${TEST_APP_NAME} || true
 
-# 4) 새 컨테이너 실행 (백그라운드)
+# 3) 새 컨테이너 실행 (백그라운드)
 docker run -d \
     --name ${TEST_APP_NAME} \
     --restart unless-stopped \
@@ -150,7 +157,7 @@ docker run -d \
     -p ${TEST_PORT}:8080 \
     ${DEV_IMAGE_NAME}:latest
 
-# 5) 상태 확인
+# 4) 상태 확인
 docker ps --filter "name=${TEST_APP_NAME}"
 docker logs --tail=50 "${TEST_APP_NAME}" || true
                         ''')
