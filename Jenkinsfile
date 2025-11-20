@@ -138,13 +138,15 @@ while true; do
   sleep 1
 done
 
-# 3) 기존 동일 이름 컨테이너 있으면 정지/삭제
 docker rm -f ${TEST_APP_NAME} || true
 
 # 4) 새 컨테이너 실행 (백그라운드)
 docker run -d \
     --name ${TEST_APP_NAME} \
     --restart unless-stopped \
+    -e TZ=Asia/Seoul \
+    -e SPRING_PROFILES_ACTIVE=secret \
+    -v /home/sw_team_3/backend/core/application-secret.yml:/config/application-secret.yml \
     -p ${TEST_PORT}:8080 \
     ${DEV_IMAGE_NAME}:latest
 
