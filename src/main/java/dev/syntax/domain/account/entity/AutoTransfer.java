@@ -1,6 +1,7 @@
 package dev.syntax.domain.account.entity;
 
 import dev.syntax.domain.account.enums.AutoTransferStatus;
+import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ public class AutoTransfer extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private CoreUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_account_id", nullable = false)
