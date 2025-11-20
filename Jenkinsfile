@@ -143,11 +143,24 @@ docker logs --tail=50 "${TEST_APP_NAME}" || true
                     if (branch == 'dev' || branch == 'origin/dev') {
                         sh('''
 # 2) 요청이 들어오는 것을 차단하고 남은 요청 처리
-curl -s -XPOST http://sw_team_3_core:8080/internal/readiness/off || true
+# 1) readiness OFF 요청 보내고 응답 출력
+echo "[readiness/off] request"
+curl -XPOST "http://sw_team_3_core:8080/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
+echo ""  # 줄바꿈
 
-curl -s http://sw_team_3_core:8080/actuator/drain
-until curl -s http://sw_team_3_core:8080/actuator/drain | jq -e '.drained == true' >/dev/null 2>&1; do
-echo "Waiting to drain..."; sleep 1
+# 2) drain 루프 - 매번 응답 JSON 출력
+echo "[drain] start polling..."
+while true; do
+  resp="$(curl -s "http://sw_team_3_core:8080/actuator/drain")"
+  echo "[drain] response: ${resp}"
+
+  echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
+    echo "[drain] drained == true, continue pipeline."
+    break
+  }
+
+  echo "[drain] Waiting to drain..."
+  sleep 1
 done
 
 # 3) 기존 동일 이름 컨테이너 있으면 정지/삭제
