@@ -120,13 +120,13 @@ pipeline {
 # 2) 요청이 들어오는 것을 차단하고 남은 요청 처리
 # 1) readiness OFF 요청 보내고 응답 출력
 echo "[readiness/off] request"
-curl -XPOST "http://http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
+curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
 echo ""  # 줄바꿈
 
 # 2) drain 루프 - 매번 응답 JSON 출력
 echo "[drain] start polling..."
 while true; do
-  resp="$(curl -s "http://http://192.168.0.79:8261/actuator/drain")"
+  resp="$(curl -s "http://192.168.0.79:8261/actuator/drain")"
   echo "[drain] response: ${resp}"
 
   echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
