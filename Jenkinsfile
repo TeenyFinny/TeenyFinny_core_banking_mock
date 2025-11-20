@@ -145,7 +145,7 @@ docker logs --tail=50 "${TEST_APP_NAME}" || true
 # 2) 요청이 들어오는 것을 차단하고 남은 요청 처리
 curl -s -XPOST http://localhost:${TEST_PORT}/internal/readiness/off || true
 
-until curl -s http://localhost:${TEST_PORT}/actuator/drain | jq -e '.drained==true' >/dev/null; do
+until curl -s http://localhost:${TEST_PORT}/actuator/drain | jq -e '.drained == true' >/dev/null 2>&1; do
 echo "Waiting to drain..."; sleep 1
 done
 
