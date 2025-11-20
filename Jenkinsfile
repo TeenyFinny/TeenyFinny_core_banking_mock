@@ -144,6 +144,7 @@ if [ "$health_status" = "UP" ]; then
         echo "[drain] Waiting to drain..."
         sleep 1
     done
+fi
 
 # 4) 새 컨테이너 실행 (백그라운드)
 docker rm -f ${TEST_APP_NAME} || true
