@@ -108,6 +108,7 @@ pipeline {
 
         stage('deploy') {
             steps{
+                sh 'docker images'
                 echo("TODO : AWS 분산환경 세팅 후 SSH로 AWS 접근 후 도커 허브의 이미지 요청 유실 없이 PULL, RUN 하기")
             }
         }
