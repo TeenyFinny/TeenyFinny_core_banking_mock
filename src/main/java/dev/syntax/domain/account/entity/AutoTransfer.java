@@ -26,7 +26,7 @@ public class AutoTransfer extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private CoreUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
