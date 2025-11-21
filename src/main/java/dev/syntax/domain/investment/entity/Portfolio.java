@@ -38,4 +38,23 @@ public class Portfolio extends BaseEntity {
 
     @Column(name = "pchs_avg_pric", nullable = false)
     private Long purchaseAvgPrice;
+
+    /**
+     * 매수 시 보유수량 증가 + 평균매입단가 재계산
+     */
+    public void updateHolding(Long quantity, Long price) {
+        long totalCost = (this.holdingQuantity * this.purchaseAvgPrice) + (quantity * price);
+        this.holdingQuantity += quantity;
+        this.purchaseAvgPrice = totalCost / this.holdingQuantity;
+    }
+
+    /**
+     * 매도 시 보유수량 감소
+     */
+    public void reduceHolding(Long quantity) {
+        if (this.holdingQuantity < quantity) {
+            throw new IllegalArgumentException("Not enough holding quantity");
+        }
+        this.holdingQuantity -= quantity;
+    }
 }

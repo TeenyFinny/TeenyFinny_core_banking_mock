@@ -1,4 +1,4 @@
-package dev.syntax.domain.investment.dto;
+package dev.syntax.domain.investment.dto.req;
 
 import lombok.Data;
 

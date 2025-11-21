@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class StockPriceDto {
+public class StockPrice {
 
     private String productCode;   // 종목코드
     private String productName;   // 종목명

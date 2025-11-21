@@ -33,4 +33,18 @@ public class InvestmentAccount extends BaseEntity {
 
     @Column(name = "scts_evlu_amt", nullable = false)
     private Long securitiesEvaluationAmount;
+
+
+    public void deposit(Long amount) {
+        this.depositAmount += amount;
+        this.totalEvaluationAmount = this.depositAmount + this.securitiesEvaluationAmount;
+    }
+
+    public void withdraw(Long amount) {
+        if (this.depositAmount < amount) {
+            throw new IllegalArgumentException("예수금이 부족합니다.");
+        }
+        this.depositAmount -= amount;
+        this.totalEvaluationAmount = this.depositAmount + this.securitiesEvaluationAmount;
+    }
 }
