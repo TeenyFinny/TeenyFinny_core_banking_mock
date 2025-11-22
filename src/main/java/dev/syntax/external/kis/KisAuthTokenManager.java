@@ -2,6 +2,7 @@ package dev.syntax.external.kis;
 
 import dev.syntax.external.kis.dto.TokenResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -10,6 +11,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class KisAuthTokenManager {
 
     private final KisApiConfig config;
@@ -41,6 +43,6 @@ public class KisAuthTokenManager {
         this.accessToken = response.getAccessToken();
         this.expiresAt = LocalDateTime.now().plusSeconds(response.getExpiresIn());
 
-        System.out.println("[KIS] Access Token refreshed. New expiry: " + response.getAccessTokenExpiredAt());
+        log.info("[KIS] Access Token refreshed. New expiry: " + response.getAccessTokenExpiredAt());
     }
 }
