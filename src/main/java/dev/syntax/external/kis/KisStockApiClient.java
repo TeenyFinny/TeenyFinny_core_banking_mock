@@ -1,6 +1,6 @@
 package dev.syntax.external.kis;
 
-import dev.syntax.external.kis.dto.MultiPriceResponse;
+import dev.syntax.external.kis.dto.MultiPriceRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -50,7 +50,7 @@ public class KisStockApiClient {
             "011200"  // HMM
     );
 
-    public MultiPriceResponse getMultiPrice() {
+    public MultiPriceRes getMultiPrice() {
 
         WebClient client = kisClient
                 .mutate()
@@ -68,7 +68,7 @@ public class KisStockApiClient {
                     return uriBuilder.build();
                 })
                 .retrieve()
-                .bodyToMono(MultiPriceResponse.class)
+                .bodyToMono(MultiPriceRes.class)
                 .block();
     }
 

@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class MultiPriceResponse {
+public class MultiPriceRes {
 
     @JsonProperty("output")
     private List<PriceItem> output;

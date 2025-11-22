@@ -1,6 +1,6 @@
 package dev.syntax.external.kis;
 
-import dev.syntax.external.kis.dto.TokenResponse;
+import dev.syntax.external.kis.dto.TokenRes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class KisAuthTokenManager {
     }
 
     private void refreshToken() {
-        TokenResponse response = kisClient.post()
+        TokenRes response = kisClient.post()
                 .uri("/oauth2/tokenP")
                 .header("Content-Type", "application/json; charset=utf-8")
                 .bodyValue(Map.of(
@@ -37,7 +37,7 @@ public class KisAuthTokenManager {
                         "appsecret", config.getAppSecret()
                 ))
                 .retrieve()
-                .bodyToMono(TokenResponse.class)
+                .bodyToMono(TokenRes.class)
                 .block();
 
         this.accessToken = response.getAccessToken();
