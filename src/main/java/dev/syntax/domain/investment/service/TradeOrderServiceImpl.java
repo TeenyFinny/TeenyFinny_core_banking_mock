@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class TradeOrderServiceImpl implements TradeOrderService{
 
     private final TradeOrderRepository tradeOrderRepository;
@@ -31,7 +31,6 @@ public class TradeOrderServiceImpl implements TradeOrderService{
      * - baas_portfolio.hldg_qty, pchs_avg_pric 갱신
      * - baas_trade_orders에 주문 내역 기록
      */
-    @Transactional
     public TradeOrder buy(
             String cano,          // CHAR(8)
             Long userId,          // BIGINT
@@ -95,7 +94,6 @@ public class TradeOrderServiceImpl implements TradeOrderService{
      * - baas_investment_account.dnca_tot_amt(예수금) 증가
      * - baas_trade_orders에 주문 내역 기록
      */
-    @Transactional
     public TradeOrder sell(
             String cano,
             Long userId,
