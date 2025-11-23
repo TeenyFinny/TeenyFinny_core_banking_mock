@@ -1,6 +1,8 @@
 package dev.syntax.domain.investment.entity;
 
 import dev.syntax.global.common.BaseEntity;
+import dev.syntax.global.exception.BusinessException;
+import dev.syntax.global.response.error.ErrorInvestmentCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -25,14 +27,9 @@ public class InvestmentAccount extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "tot_evlu_amt", nullable = false)
-    private Long totalEvaluationAmount;
-
     @Column(name = "dnca_tot_amt", nullable = false)
     private Long depositAmount;
 
-    @Column(name = "scts_evlu_amt", nullable = false)
-    private Long securitiesEvaluationAmount;
 
 
     /**
@@ -42,7 +39,6 @@ public class InvestmentAccount extends BaseEntity {
      */
     public void deposit(Long amount) {
         this.depositAmount += amount;
-        this.totalEvaluationAmount = this.depositAmount + this.securitiesEvaluationAmount;
     }
 
     /**
@@ -52,9 +48,8 @@ public class InvestmentAccount extends BaseEntity {
      */
     public void withdraw(Long amount) {
         if (this.depositAmount < amount) {
-            throw new IllegalArgumentException("예수금이 부족합니다.");
+            throw new BusinessException(ErrorInvestmentCode.INSUFFICIENT_BALANCE);
         }
         this.depositAmount -= amount;
-        this.totalEvaluationAmount = this.depositAmount + this.securitiesEvaluationAmount;
     }
 }
