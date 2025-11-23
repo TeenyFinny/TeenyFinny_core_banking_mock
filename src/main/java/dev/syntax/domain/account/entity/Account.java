@@ -13,6 +13,15 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * 계좌 엔티티
+ * <p>
+ * 은행 계좌 정보와 잔액을 관리합니다.
+ * 입금/출금에 따른 잔액 변경은 incrementBalance/decrementBalance 메서드를 통해 수행됩니다.
+ * </p>
+ *
+ * @author TeenyFinny Core Banking Team
+ */
 @Entity
 @Table(name = "core_account")
 @Getter
@@ -54,4 +63,29 @@ public class Account extends BaseTimeEntity {
     private AccountType type = AccountType.DEPOSIT;
 
     private LocalDate expiredAt;
+
+    /**
+     * 계좌 잔액을 증가시킵니다 (입금 시 사용).
+     * <p>
+     * BalanceService.deposit()에서 호출됩니다.
+     * </p>
+     *
+     * @param amount 증가할 금액 (양수)
+     */
+    public void incrementBalance(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+    }
+
+    /**
+     * 계좌 잔액을 감소시킵니다 (출금 시 사용).
+     * <p>
+     * BalanceService.withdraw()에서 호출됩니다.
+     * </p>
+     *
+     * @param amount 감소할 금액 (양수)
+     */
+    public void decrementBalance(BigDecimal amount) {
+        this.balance = this.balance.subtract(amount);
+    }
+
 }

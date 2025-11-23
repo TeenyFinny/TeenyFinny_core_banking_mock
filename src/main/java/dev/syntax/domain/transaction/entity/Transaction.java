@@ -13,6 +13,16 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 거래 내역 엔티티
+ * <p>
+ * 모든 계좌 거래(입금, 출금, 자동이체 등)의 내역을 기록합니다.
+ * TransactionService.record()를 통해 생성되며,
+ * BalanceService의 모든 잔액 변경 발생 시 자동으로 기록됩니다.
+ * </p>
+ *
+ * @author TeenyFinny Core Banking Team
+ */
 @Entity
 @Table(name = "core_transaction")
 @Getter
@@ -37,8 +47,11 @@ public class Transaction extends BaseTimeEntity {
     @Column(name = "code", length = 10, nullable = false)
     private String code;
 
-    @Column(name = "type", length = 20, nullable = false)
+    @Column(name = "type", length = 20, nullable = true)
     private String type;
+
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
 
     @Column(name = "balance_after", nullable = false, precision = 15, scale = 3)
     private BigDecimal balanceAfter;
