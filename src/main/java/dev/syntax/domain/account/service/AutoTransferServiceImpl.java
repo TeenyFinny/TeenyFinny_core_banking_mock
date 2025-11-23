@@ -13,6 +13,7 @@ import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -76,20 +77,22 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
     /**
      * 자동이체를 실행합니다.
-     * <p>
-     * try-catch로 감싸져 실패 시에도 다음 실행일은 갱신됩니다.
-     * 1. BalanceService.withdraw() - AUTO_WITHDRAW
-     * 2. BalanceService.deposit() - AUTO_DEPOSIT
-     * 3. 성공 시 SUCCESS, 실패 시 FAIL 상태로 변경
-     * 4. 다음 실행일 계산 및 업데이트
-     * </p>
+     *
+     * <p>트랜잭션 처리 특징:</p>
+     * <ul>
+     *   <li>출금/입금 중 예외 발생 시 execute() 전체는 롤백됨</li>
+     *   <li>그러나 상태/다음 실행일 업데이트는
+     *       {@link #updateStatusAndNextDate(AutoTransfer, AutoTransferStatus)}
+     *       의 REQUIRES_NEW 트랜잭션으로 분리되어 항상 DB에 반영됨</li>
+     *   <li>이로 인해 실패한 자동이체가 반복 실행되는 문제를 방지함</li>
+     * </ul>
      */
     @Transactional
     @Override
     public void execute(AutoTransfer t) {
 
         try {
-            // 1) 출금 (AUTO_WITHDRAW)
+            // 1) 출금 (AUTO_WITHDRAW) - 자동이체 출금 거래 기록
             balanceService.withdraw(
                     t.getFromAccount(),
                     t.getUser(),
@@ -100,7 +103,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                     TransactionCode.AUTO_WITHDRAW
             );
 
-            // 2) 입금 (AUTO_DEPOSIT)
+            // 2) 입금 (AUTO_DEPOSIT)- 자동이체 입금 거래 기록
             balanceService.deposit(
                     t.getToAccount(),
                     t.getUser(),
@@ -111,22 +114,40 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                     TransactionCode.AUTO_DEPOSIT
             );
 
-            // 3) SUCCESS 상태로 변경
-            t = autoTransferRepository.findById(t.getId()).orElse(t);
-            t.setStatus(AutoTransferStatus.SUCCESS);
+            // 3) 실행 성공 처리
+            // (상태 + 다음 실행일) → REQUIRES_NEW 트랜잭션으로 별도 반영
+            updateStatusAndNextDate(t, AutoTransferStatus.SUCCESS);
 
         } catch (Exception e) {
 
-            // 실패 처리
-            t = autoTransferRepository.findById(t.getId()).orElse(t);
-            t.setStatus(AutoTransferStatus.FAIL);
+            // 출금/입금 중 오류 발생 시 FAIL 상태 저장
+            updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
         }
 
-        // 4) 다음 실행일 갱신
+        // execute() 트랜잭션에서는 상태 저장을 다시 수행하지 않음
+        // UPDATE는 REQUIRES_NEW 메서드에서 이미 커밋됨
+        autoTransferRepository.save(t);
+    }
+
+    /**
+     * 자동이체 상태 및 다음 실행일을 갱신하는 메서드.
+     *
+     * <p>Propagation.REQUIRES_NEW로 설정되어 있어,
+     * execute() 트랜잭션이 실패하더라도 이 로직은 별도의 트랜잭션으로 커밋됩니다.
+     * 자동이체 실패가 반복 실행되는 문제를 방지하는 핵심 포인트입니다.</p>
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected void updateStatusAndNextDate(AutoTransfer t, AutoTransferStatus status) {
+
+        // 상태 변경 (SUCCESS / FAIL)
+        t.setStatus(status);
+
+        // 다음 실행일 갱신
         t.setNextTransferDay(
                 AutoTransferDateCalculator.getNextTransferDate(t.getTransferDay())
         );
 
+        // 별도의 트랜잭션으로 강제 커밋됨
         autoTransferRepository.save(t);
     }
 

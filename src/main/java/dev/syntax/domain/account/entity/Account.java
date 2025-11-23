@@ -39,7 +39,7 @@ public class Account extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private CoreUser user;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, unique = true)
     private String number;
 
     @Column(name = "product_name", length = 100, nullable = false)
