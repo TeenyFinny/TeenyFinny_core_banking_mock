@@ -83,12 +83,8 @@ public class InitServiceImpl implements InitService {
                 TransactionCode.DEPOSIT
         );
 
-        // 입금 후 최신 계좌 정보 조회 (잔액 반영)
-        Account updatedAccount = accountRepository.findById(newAccount.getId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
-
         // 계좌 정보를 AccountItemRes로 변환
-        AccountItemRes accountRes = AccountItemRes.from(updatedAccount);
+        AccountItemRes accountRes = AccountItemRes.from(newAccount);
 
         // 반환
         return ChannelUserInitRes.from(coreUser, accountRes);
