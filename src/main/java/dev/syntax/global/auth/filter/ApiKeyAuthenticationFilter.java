@@ -3,6 +3,7 @@ package dev.syntax.global.auth.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.syntax.global.auth.ApiKeyAuthenticationToken;
 import dev.syntax.global.auth.CoreSecurityProperties;
+import dev.syntax.global.auth.SecurityConfig;
 import dev.syntax.global.response.AuthErrorResponse;
 import dev.syntax.global.response.BaseResponse;
 import dev.syntax.global.response.error.ErrorAuthCode;
@@ -11,12 +12,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import static java.security.MessageDigest.isEqual;
 
 /**
  * API Key 기반으로 channel 서버를 인증하는 필터입니다.
@@ -46,9 +50,17 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        AntPathMatcher matcher = new AntPathMatcher();
         String uri = request.getRequestURI();
-        return uri.equals("/core/banking/init") || uri.startsWith("/test/");
+
+        for (String openUri : SecurityConfig.PUBLIC_URIS) {
+            if (matcher.match(openUri, uri)) {
+                return true;
+            }
+        }
+        return false;
     }
+
 
     @Override
     protected void doFilterInternal(
@@ -69,15 +81,20 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String expected = securityProperties.getApiKey();
-        if (!StringUtils.hasText(expected) || !expected.equals(apiKey)) {
+        if (!StringUtils.hasText(expected) || !isEqual(expected.getBytes(), apiKey.getBytes())) {
             writeError(response, ErrorAuthCode.UNAUTHORIZED);
             return;
         }
 
         List<String> allowedIps = securityProperties.getAllowedIps();
-        if (allowedIps != null && !allowedIps.isEmpty()) {
-            String remoteIp = request.getRemoteAddr();
-            if (!allowedIps.contains(remoteIp)) {
+
+        if (securityProperties.isEnableIpFilter()
+                && allowedIps != null
+                && !allowedIps.isEmpty()) {
+
+            String clientIp = request.getRemoteAddr(); // dev에서는 그냥 remoteAddr로 OK
+
+            if (!allowedIps.contains(clientIp)) {
                 writeError(response, ErrorAuthCode.ACCESS_DENIED);
                 return;
             }

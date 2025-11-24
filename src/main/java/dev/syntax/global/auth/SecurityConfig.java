@@ -19,6 +19,7 @@ public class SecurityConfig {
 
     private final CoreSecurityProperties securityProperties;
     private final ObjectMapper objectMapper;
+    public static final String[] PUBLIC_URIS = {"/core/banking/init", "/test/**"};
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -29,7 +30,7 @@ public class SecurityConfig {
                 .formLogin(fl -> fl.disable())
                 .httpBasic(hb -> hb.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/core/banking/init", "/test/**").permitAll()
+                        .requestMatchers(PUBLIC_URIS).permitAll()
                         .anyRequest().authenticated()
                 );
 

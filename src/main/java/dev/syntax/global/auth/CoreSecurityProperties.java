@@ -25,6 +25,11 @@ public class CoreSecurityProperties {
     private String apiKey;
 
     /**
+     * IP필터링 여부
+     */
+    private boolean enableIpFilter = false;
+
+    /**
      * 허용할 원격 IP 목록입니다.
      * 비어 있으면 IP 검증을 수행하지 않습니다.
      */

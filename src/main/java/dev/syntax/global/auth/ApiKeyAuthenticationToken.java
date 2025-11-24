@@ -27,7 +27,7 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getCredentials() {
-        return "";
+        return null;
     }
 
     @Override
