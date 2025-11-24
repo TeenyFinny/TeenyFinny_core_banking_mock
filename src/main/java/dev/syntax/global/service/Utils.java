@@ -1,6 +1,7 @@
 package dev.syntax.global.service;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 
 /**
  * 공통적으로 사용되는 서비스 로직은 이곳에 작성해주세요.
@@ -40,6 +41,6 @@ public class Utils {
         if (num == null) {
             return "0";
         }
-        return String.format("%,.0f", num.doubleValue());
+        return new DecimalFormat("#,###").format(num);
     }
 }
