@@ -5,13 +5,17 @@ import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.service.AccountService;
+import dev.syntax.global.auth.annotation.CurrentUserId;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
 import dev.syntax.global.response.SuccessCode;
+import dev.syntax.global.response.error.ErrorAuthCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 /**
  * 계좌 관련 컨트롤러
@@ -40,7 +44,10 @@ public class AccountController {
      * @return 생성된 계좌 정보
      */
     @PostMapping("/create")
-    public ResponseEntity<BaseResponse<?>> createDepositAccount(@Valid @RequestBody DepositAccountReq req) {
+    public ResponseEntity<BaseResponse<?>> createDepositAccount(@CurrentUserId Long userId, @Valid @RequestBody DepositAccountReq req) {
+        if (!Objects.equals(userId, req.parentCoreId())) {
+            return ApiResponseUtil.failure(ErrorAuthCode.ACCESS_DENIED);
+        }
         Account account = accountService.createChildDepositAccount(req);
         AccountItemRes response = AccountItemRes.from(account);
         return ApiResponseUtil.success(SuccessCode.OK, response);
@@ -52,12 +59,15 @@ public class AccountController {
      * 특정 사용자의 전체 계좌를 조회합니다.
      * 부모일 경우 자녀의 계좌까지 포함하여 반환합니다.
      * </p>
+     * <p>
+     * `@CurrentUserId` 어노테이션을 통해 SecurityContext에서 자동으로 userId를 주입받습니다.
+     * </p>
      *
-     * @param userId 사용자 ID // 다음 PR에서 헤더로 변경될 예정입니다.
+     * @param userId X-Core-User-Id 헤더에서 추출된 사용자 ID
      * @return 계좌 목록
      */
     @GetMapping
-    public ResponseEntity<BaseResponse<?>> getAccounts(@RequestParam Long userId) {
+    public ResponseEntity<BaseResponse<?>> getAccounts(@CurrentUserId Long userId) {
         UserAccountListRes response = accountService.getUserAccounts(userId);
         return ApiResponseUtil.success(SuccessCode.OK, response);
     }
