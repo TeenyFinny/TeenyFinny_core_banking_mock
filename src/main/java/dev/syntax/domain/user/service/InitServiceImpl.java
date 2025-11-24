@@ -53,13 +53,11 @@ public class InitServiceImpl implements InitService {
     public UserInitRes initChannelUser(ChannelUserInitReq req) {
         Role role = req.role();
 
-        if (role == Role.PARENT) {
-            return initParentUser(req);
-        } else if (role == Role.CHILD) {
-            return initChildUser(req);
-        } else {
-            throw new BusinessException(ErrorAuthCode.UNAUTHORIZED);
-        }
+        return switch (role) {
+            case PARENT -> initParentUser(req);
+            case CHILD -> initChildUser(req);
+            default -> throw new BusinessException(ErrorAuthCode.UNAUTHORIZED);
+        };
     }
 
     /**
