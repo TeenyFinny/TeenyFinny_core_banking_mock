@@ -7,7 +7,9 @@ import dev.syntax.domain.account.service.BalanceService;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.dto.ChannelUserInitReq;
-import dev.syntax.domain.user.dto.ChannelUserInitRes;
+import dev.syntax.domain.user.dto.ChildUserInitRes;
+import dev.syntax.domain.user.dto.ParentUserInitRes;
+import dev.syntax.domain.user.dto.UserInitRes;
 import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.domain.user.enums.Role;
 import dev.syntax.domain.user.repository.CoreUserRepository;
@@ -22,9 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 
 /**
- * 사용자 초기화 서비스 구현체
+ * 사용자 생성 서비스 구현체
  * <p>
  * 부모 사용자 가입 시 CoreUser 생성, 계좌 생성, 초기 잔액 입금을 처리합니다.
+ * 자녀 사용자 가입 시 CoreUser를 생성합니다.
  * </p>
  */
 @Slf4j
@@ -40,47 +43,35 @@ public class InitServiceImpl implements InitService {
     private static final String INITIAL_DEPOSIT_MERCHANT_NAME = "초기 잔액";
 
     /**
-     * 부모 사용자 초기화를 처리합니다.
+     * 사용자 생성을 처리합니다.
      * <p>
-     * 1. 기존 사용자 중복 확인
-     * 2. CoreUser 생성 및 저장
-     * 3. 입출금 통장 계좌 생성
-     * 4. 초기 잔액 100만원 입금
+     * 요청의 Role에 따라 부모와 자녀를 구분하여 처리합니다.
      * </p>
-     *
-     * @param req 사용자 초기화 요청 정보
-     * @return 생성된 사용자 ID와 계좌 정보
-     * @throws BusinessException 이미 등록된 사용자인 경우 (CONFLICT)
      */
     @Transactional
     @Override
-    public ChannelUserInitRes initChannelParentUser(ChannelUserInitReq req) {
+    public UserInitRes initChannelUser(ChannelUserInitReq req) {
+        Role role = req.role();
 
-        if (Role.PARENT != req.role()){
-            throw new BusinessException(ErrorAuthCode.UNAUTHORIZED);
-        }
+        return switch (role) {
+            case PARENT -> initParentUser(req);
+            case CHILD -> initChildUser(req);
+            default -> throw new BusinessException(ErrorAuthCode.UNAUTHORIZED);
+        };
+    }
 
-        // 기존에 등록된 유저인지 확인
-        boolean exist = coreUserRepository.existsByChannelUserId(req.channelUserId());
-        if (exist) {
-            throw new BusinessException(ErrorBaseCode.CONFLICT);
-        }
-
-        // CoreUser 생성 및 저장
-        CoreUser coreUser = CoreUser.builder()
-                .channelUserId(req.channelUserId())
-                .name(req.name())
-                .phoneNumber(req.phoneNumber())
-                .birthDate(req.birthDate())
-                .build();
-        coreUserRepository.save(coreUser);
+    /**
+     * 부모 사용자 생성 처리합니다.
+     */
+    private ParentUserInitRes initParentUser(ChannelUserInitReq req) {
+        CoreUser user = registerUser(req);
 
         // 계좌 생성
-        Account newAccount = accountService.createDepositAccount(coreUser);
+        Account newAccount = accountService.createDepositAccount(user);
 
         balanceService.deposit(
                 newAccount.getId(),
-                coreUser,
+                user,
                 INITIAL_DEPOSIT_AMOUNT, // 100만원 입금
                 INITIAL_DEPOSIT_MERCHANT_NAME,
                 TransactionCategory.ETC,
@@ -92,6 +83,47 @@ public class InitServiceImpl implements InitService {
         AccountItemRes accountRes = AccountItemRes.from(newAccount);
 
         // 반환
-        return ChannelUserInitRes.from(coreUser, accountRes);
+        return ParentUserInitRes.from(user, accountRes);
+    }
+
+    /**
+     * 자녀 사용자 초기화를 처리합니다.
+     */
+    private ChildUserInitRes initChildUser(ChannelUserInitReq req) {
+        CoreUser user = registerUser(req);
+
+        // 반환
+        return new ChildUserInitRes(user.getId());
+    }
+
+    /**
+     * CoreUser를 생성하고 저장합니다.
+     * <p>
+     * 채널 사용자 ID로 중복 여부를 확인하고, 중복되지 않은 경우 새로운 CoreUser를 생성하여 저장합니다.
+     * 계좌 생성 및 가족 관계 등록은 이 메서드에서 처리하지 않습니다.
+     * </p>
+     *
+     * @param req 사용자 생성 요청 정보
+     * @return 생성된 CoreUser 엔티티
+     * @throws BusinessException 이미 등록된 사용자인 경우 (CONFLICT)
+     */
+    private CoreUser registerUser(ChannelUserInitReq req) {
+
+        // 기존에 등록된 유저인지 확인
+        boolean exist = coreUserRepository.existsByChannelUserId(req.channelUserId());
+        if (exist) {
+            throw new BusinessException(ErrorBaseCode.CONFLICT);
+        }
+
+        // CoreUser 생성 및 저장 (계좌 생성 및 가족 관계 등록 안함)
+        CoreUser user = CoreUser.builder()
+                .channelUserId(req.channelUserId())
+                .name(req.name())
+                .phoneNumber(req.phoneNumber())
+                .birthDate(req.birthDate())
+                .build();
+        coreUserRepository.save(user);
+
+        return user;
     }
 }
