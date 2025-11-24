@@ -2,7 +2,6 @@ package dev.syntax.domain.user.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.account.entity.Account;
-import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.domain.account.service.BalanceService;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
@@ -10,8 +9,10 @@ import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.dto.ChannelUserInitReq;
 import dev.syntax.domain.user.dto.ChannelUserInitRes;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.enums.Role;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
+import dev.syntax.global.response.error.ErrorAuthCode;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,9 @@ public class InitServiceImpl implements InitService {
     private final CoreUserRepository coreUserRepository;
     private final AccountService accountService;
     private final BalanceService balanceService;
-    private final AccountRepository accountRepository;
+
+    private static final BigDecimal INITIAL_DEPOSIT_AMOUNT = new BigDecimal("1000000");
+    private static final String INITIAL_DEPOSIT_MERCHANT_NAME = "초기 잔액";
 
     /**
      * 부모 사용자 초기화를 처리합니다.
@@ -52,6 +55,10 @@ public class InitServiceImpl implements InitService {
     @Transactional
     @Override
     public ChannelUserInitRes initChannelParentUser(ChannelUserInitReq req) {
+
+        if (Role.PARENT != req.role()){
+            throw new BusinessException(ErrorAuthCode.UNAUTHORIZED);
+        }
 
         // 기존에 등록된 유저인지 확인
         boolean exist = coreUserRepository.existsByChannelUserId(req.channelUserId());
@@ -71,13 +78,11 @@ public class InitServiceImpl implements InitService {
         // 계좌 생성
         Account newAccount = accountService.createDepositAccount(coreUser);
 
-        // 100만원 입금
-        BigDecimal initialAmount = new BigDecimal("1000000");
         balanceService.deposit(
                 newAccount.getId(),
                 coreUser,
-                initialAmount,
-                "초기 잔액",
+                INITIAL_DEPOSIT_AMOUNT, // 100만원 입금
+                INITIAL_DEPOSIT_MERCHANT_NAME,
                 TransactionCategory.ETC,
                 null,
                 TransactionCode.DEPOSIT

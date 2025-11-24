@@ -1,6 +1,7 @@
 package dev.syntax.domain.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import dev.syntax.domain.user.enums.Role;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -10,8 +11,8 @@ public record ChannelUserInitReq(
 	@NotNull
 	Long channelUserId,
 
-    @NotBlank
-    String role,
+    @NotNull
+    Role role,
 
 	@NotBlank
 	String name,
