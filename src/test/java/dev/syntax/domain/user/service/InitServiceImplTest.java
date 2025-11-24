@@ -41,7 +41,6 @@ class InitServiceImplTest {
     private CoreUserRepository coreUserRepository;
 
 
-
     @Mock
     private AccountService accountService;
 
