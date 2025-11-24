@@ -152,11 +152,11 @@ public class InitServiceImpl implements InitService {
     public CoreUser createFamilyRelationship(DepositAccountReq req) {
         // 부모 CoreUser 조회
         CoreUser parent = coreUserRepository.findById(req.parentCoreId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.PARENT_USER_NOT_FOUND));
 
         // 자녀 CoreUser 조회
         CoreUser child = coreUserRepository.findById(req.childCoreId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
 
         // 기존 가족 관계 확인
         boolean relationshipExists = coreUserRelationshipRepository.existsByParentAndChild(parent, child);
