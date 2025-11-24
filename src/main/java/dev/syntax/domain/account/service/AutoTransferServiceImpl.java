@@ -94,7 +94,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         try {
             // 1) 출금 (AUTO_WITHDRAW) - 자동이체 출금 거래 기록
             balanceService.withdraw(
-                    t.getFromAccount(),
+                    t.getFromAccount().getId(),
                     t.getUser(),
                     t.getAmount(),
                     "자동이체 출금",
@@ -105,7 +105,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
             // 2) 입금 (AUTO_DEPOSIT)- 자동이체 입금 거래 기록
             balanceService.deposit(
-                    t.getToAccount(),
+                    t.getToAccount().getId(),
                     t.getUser(),
                     t.getAmount(),
                     "자동이체 입금",

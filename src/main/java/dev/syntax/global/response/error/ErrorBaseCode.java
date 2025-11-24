@@ -57,6 +57,7 @@ public enum ErrorBaseCode implements ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     WITHDRAWAL_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     DEPOSIT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+	ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
 
 
     /**

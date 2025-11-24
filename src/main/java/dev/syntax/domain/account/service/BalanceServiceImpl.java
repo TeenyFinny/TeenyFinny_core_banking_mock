@@ -42,13 +42,17 @@ public class BalanceServiceImpl implements BalanceService {
      */
     @Transactional
     @Override
-    public void deposit(Account account,
+    public void deposit(Long accountId,
                         CoreUser user,
                         BigDecimal amount,
                         String merchantName,
                         TransactionCategory category,
                         TransactionType type,
                         TransactionCode code) {
+
+        // 비관적 락을 사용하여 계좌 조회
+        Account account = accountRepository.findByIdWithPessimisticLock(accountId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
 
         // 잔액 증가
         account.incrementBalance(amount);
@@ -81,13 +85,17 @@ public class BalanceServiceImpl implements BalanceService {
      */
     @Transactional
     @Override
-    public void withdraw(Account account,
+    public void withdraw(Long accountId,
                          CoreUser user,
                          BigDecimal amount,
                          String merchantName,
                          TransactionCategory category,
                          TransactionType type,
                          TransactionCode code) {
+
+        // 비관적 락을 사용하여 계좌 조회
+        Account account = accountRepository.findByIdWithPessimisticLock(accountId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
 
         if (account.getBalance().compareTo(amount) < 0) {
             throw new BusinessException(ErrorBaseCode.ACCOUNT_BALANCE_NOT_ENOUGH);
