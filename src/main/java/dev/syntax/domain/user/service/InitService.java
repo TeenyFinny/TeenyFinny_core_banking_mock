@@ -1,6 +1,7 @@
 package dev.syntax.domain.user.service;
 
 import dev.syntax.domain.user.dto.ChannelUserInitReq;
+import dev.syntax.domain.user.dto.UserInitRes;
 import dev.syntax.global.exception.BusinessException;
 
 /**
@@ -26,5 +27,5 @@ public interface InitService {
      * @throws BusinessException 이미 등록된 사용자인 경우 (CONFLICT)
      * @throws BusinessException 잘못된 Role인 경우 (UNAUTHORIZED)
      */
-    Object initChannelUser(ChannelUserInitReq req);
+    UserInitRes initChannelUser(ChannelUserInitReq req);
 }

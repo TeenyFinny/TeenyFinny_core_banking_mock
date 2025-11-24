@@ -12,7 +12,7 @@ import dev.syntax.domain.user.entity.CoreUser;
 public record ParentUserInitRes(
 	Long coreUserId,
     AccountItemRes account
-) {
+) implements UserInitRes {
     /**
      * CoreUser와 Account 엔티티로부터 ChannelUserInitRes를 생성합니다.
      *

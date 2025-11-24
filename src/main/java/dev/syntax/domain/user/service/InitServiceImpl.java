@@ -9,6 +9,7 @@ import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.dto.ChannelUserInitReq;
 import dev.syntax.domain.user.dto.ChildUserInitRes;
 import dev.syntax.domain.user.dto.ParentUserInitRes;
+import dev.syntax.domain.user.dto.UserInitRes;
 import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.domain.user.enums.Role;
 import dev.syntax.domain.user.repository.CoreUserRepository;
@@ -49,7 +50,7 @@ public class InitServiceImpl implements InitService {
      */
     @Transactional
     @Override
-    public Object initChannelUser(ChannelUserInitReq req) {
+    public UserInitRes initChannelUser(ChannelUserInitReq req) {
         Role role = req.role();
 
         if (role == Role.PARENT) {

@@ -1,6 +1,7 @@
 package dev.syntax.domain.user.controller;
 
 import dev.syntax.domain.user.dto.ChannelUserInitReq;
+import dev.syntax.domain.user.dto.UserInitRes;
 import dev.syntax.domain.user.service.InitService;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
@@ -35,7 +36,7 @@ public class BankingController {
      */
     @PostMapping("/init")
     public ResponseEntity<BaseResponse<?>> createCoreUser(@Valid @RequestBody ChannelUserInitReq request) {
-        Object response = initService.initChannelUser(request);
+        UserInitRes response = initService.initChannelUser(request);
         return ApiResponseUtil.success(SuccessCode.OK, response);
     }
 }
