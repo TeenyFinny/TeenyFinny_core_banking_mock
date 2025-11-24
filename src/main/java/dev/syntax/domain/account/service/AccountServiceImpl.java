@@ -9,12 +9,19 @@ import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
+import dev.syntax.domain.user.repository.CoreUserRepository;
+import dev.syntax.global.exception.BusinessException;
+import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +29,8 @@ import java.util.List;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
-    private final dev.syntax.domain.user.repository.CoreUserRepository coreUserRepository;
-    private final dev.syntax.domain.user.repository.CoreUserRelationshipRepository coreUserRelationshipRepository;
+    private final CoreUserRepository coreUserRepository;
+    private final CoreUserRelationshipRepository relationshipRepository;
 
     @Override
     public UserAccountListRes getUserAccounts(Long coreUserId) {
@@ -33,14 +40,24 @@ public class AccountServiceImpl implements AccountService {
                 .toList();
 
         // 2. 자녀 계좌 조회 (부모일 경우)
-        List<ChildAccountInfoRes> children = coreUserRelationshipRepository.findAllByParent_Id(coreUserId).stream()
-                .map(relationship -> {
-                    Long childId = relationship.getChild().getId();
-                    List<AccountItemRes> childAccounts = accountRepository.findAllByUserId(childId).stream()
-                            .map(AccountItemRes::from)
-                            .toList();
-                    return new ChildAccountInfoRes(childId, childAccounts);
-                })
+        List<Long> childIds = relationshipRepository.findAllByParent_Id(coreUserId).stream()
+                .map(relationship -> relationship.getChild().getId())
+                .toList();
+
+        if (childIds.isEmpty()) {
+            return new UserAccountListRes(myAccounts, Collections.emptyList());
+        }
+
+        List<Account> allChildAccounts = accountRepository.findAllByUser_IdIn(childIds);
+
+        Map<Long, List<AccountItemRes>> childAccountsByChildId = allChildAccounts.stream()
+                .collect(Collectors.groupingBy(
+                        account -> account.getUser().getId(),
+                        Collectors.mapping(AccountItemRes::from, Collectors.toList())
+                ));
+
+        List<ChildAccountInfoRes> children = childIds.stream()
+                .map(childId -> new ChildAccountInfoRes(childId, childAccountsByChildId.getOrDefault(childId, Collections.emptyList())))
                 .toList();
 
         return new UserAccountListRes(myAccounts, children);
@@ -79,16 +96,16 @@ public class AccountServiceImpl implements AccountService {
     private CoreUser createFamilyRelationship(DepositAccountReq req) {
         // 부모 CoreUser 조회
         CoreUser parent = coreUserRepository.findById(req.parentCoreId())
-                .orElseThrow(() -> new dev.syntax.global.exception.BusinessException(dev.syntax.global.response.error.ErrorBaseCode.PARENT_USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.PARENT_USER_NOT_FOUND));
 
         // 자녀 CoreUser 조회
         CoreUser child = coreUserRepository.findById(req.childCoreId())
-                .orElseThrow(() -> new dev.syntax.global.exception.BusinessException(dev.syntax.global.response.error.ErrorBaseCode.CHILD_USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
 
         // 기존 가족 관계 확인
-        boolean relationshipExists = coreUserRelationshipRepository.existsByParentAndChild(parent, child);
+        boolean relationshipExists = relationshipRepository.existsByParentAndChild(parent, child);
         if (relationshipExists) {
-            throw new dev.syntax.global.exception.BusinessException(dev.syntax.global.response.error.ErrorBaseCode.CONFLICT);
+            throw new BusinessException(ErrorBaseCode.CONFLICT);
         }
 
         // 가족 관계 매핑
@@ -96,7 +113,7 @@ public class AccountServiceImpl implements AccountService {
                 .parent(parent)
                 .child(child)
                 .build();
-        coreUserRelationshipRepository.save(relationship);
+        relationshipRepository.save(relationship);
 
         return child;
     }

@@ -58,7 +58,7 @@ public class AccountController {
      * @param userId 사용자 ID // 다음 PR에서 헤더로 변경될 예정입니다.
      * @return 계좌 목록
      */
-    @org.springframework.web.bind.annotation.GetMapping
+    @GetMapping
     public ResponseEntity<BaseResponse<?>> getAccounts(@RequestParam Long userId) {
         UserAccountListRes response = accountService.getUserAccounts(userId);
         return ApiResponseUtil.success(SuccessCode.OK, response);
