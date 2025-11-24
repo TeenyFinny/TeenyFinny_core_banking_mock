@@ -2,8 +2,8 @@ package dev.syntax.domain.account.controller;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
+import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.service.AccountService;
-import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.domain.user.service.InitService;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
@@ -45,8 +45,8 @@ public class AccountController {
      */
     @PostMapping("/create")
     public ResponseEntity<BaseResponse<?>> createDepositAccount(@Valid @RequestBody DepositAccountReq req) {
-        CoreUser user = initService.createFamilyRelationship(req);
-        AccountItemRes response = AccountItemRes.from(accountService.createDepositAccount(user));
+        Account account = accountService.createChildDepositAccount(req);
+        AccountItemRes response = AccountItemRes.from(account);
         return ApiResponseUtil.success(SuccessCode.OK, response);
     }
 }

@@ -1,11 +1,13 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.service.InitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import java.util.List;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
+    private final InitService initService;
 
     @Override
     public List<AccountItemRes> getUserAccounts(Long coreUserId) {
@@ -41,5 +44,11 @@ public class AccountServiceImpl implements AccountService {
                 .build();
 
         return accountRepository.save(account);
+    }
+
+    @Transactional
+    public Account createChildDepositAccount(DepositAccountReq req) {
+        CoreUser child = initService.createFamilyRelationship(req);
+        return createDepositAccount(child);
     }
 }
