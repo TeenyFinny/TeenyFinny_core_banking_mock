@@ -4,14 +4,21 @@ import dev.syntax.domain.account.enums.AutoTransferStatus;
 import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * 자동이체 엔티티
+ * <p>
+ * 매달 정해진 날짜에 자동으로 실행되는 계좌간 이체 정보를 관리합니다.
+ * AutoTransferService의 execute() 메서드를 통해 실행되며,
+ * 실행 후 다음 실행일(nextTransferDay)이 자동으로 갱신됩니다.
+ * </p>
+ *
+ * @author TeenyFinny Core Banking Team
+ */
 @Entity
 @Table(name = "core_auto_transfer")
 @Getter
@@ -46,9 +53,11 @@ public class AutoTransfer extends BaseTimeEntity {
     @Column(name = "transfer_day", nullable = false)
     private Integer transferDay;
 
+    @Setter
     @Column(name = "next_transfer_day")
     private LocalDate nextTransferDay;
 
+    @Setter
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

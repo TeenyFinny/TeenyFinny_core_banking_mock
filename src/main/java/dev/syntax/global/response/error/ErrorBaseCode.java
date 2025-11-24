@@ -54,11 +54,16 @@ public enum ErrorBaseCode implements ErrorCode {
      * 404 NOT FOUND - 찾을 수 없음
      */
     NOT_FOUND_ENTITY(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+    WITHDRAWAL_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+    DEPOSIT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+	ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+
 
     /**
      * 405 METHOD NOT ALLOWED - 허용되지 않은 메서드
      */
-    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED,  "잘못된 HTTP METHOD 요청입니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "잘못된 HTTP METHOD 요청입니다."),
 
     /**
      * 409 CONFLICT
@@ -81,6 +86,12 @@ public enum ErrorBaseCode implements ErrorCode {
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원되지 않는 데이터 형식입니다."),
 
     /**
+     * 422 Unprocessable Entity
+     */
+    UNPROCESSABLE_ENTITY(HttpStatus.UNPROCESSABLE_ENTITY, "처리할 수 없습니다."),
+    ACCOUNT_BALANCE_NOT_ENOUGH(HttpStatus.UNPROCESSABLE_ENTITY, "처리할 수 없습니다."),
+
+    /**
      * 429 TOO_MANY_REQUESTS
      */
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "너무 많은 요청입니다."),
@@ -89,6 +100,7 @@ public enum ErrorBaseCode implements ErrorCode {
      * 500 INTERNAL SERVER ERROR
      */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류입니다."),
+    ACCOUNT_GENERATION_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류입니다."),
 
     /**
      * 501 NOT IMPLEMENTED
@@ -115,7 +127,6 @@ public enum ErrorBaseCode implements ErrorCode {
      * 504 GATEWAY_TIMEOUT
      */
     HTTP_VERSION_NOT_SUPPORTED(HttpStatus.HTTP_VERSION_NOT_SUPPORTED, "HTTP_VERSION_NOT_SUPPORTED");
-
 
 
     private final HttpStatus httpStatus;
