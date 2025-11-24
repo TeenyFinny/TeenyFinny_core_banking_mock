@@ -2,10 +2,9 @@ package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
+import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.user.entity.CoreUser;
-
-import java.util.List;
 
 /**
  * AccountService
@@ -18,14 +17,17 @@ import java.util.List;
  * <p>조회된 계좌는 {@link AccountItemRes} DTO 형태로 변환되어 제공됩니다.</p>
  */
 public interface AccountService {
-    
+
     /**
      * 주어진 coreUserId에 해당하는 사용자의 모든 계좌를 조회합니다.
+     * <p>
+     * 부모일 경우 자녀의 계좌 정보도 함께 반환합니다.
+     * </p>
      *
      * @param coreUserId Core 서버 내부 사용자의 고유 식별자
-     * @return 사용자 계좌 목록 (없을 경우 빈 리스트)
+     * @return 사용자 및 자녀 계좌 목록
      */
-    List<AccountItemRes> getUserAccounts(Long coreUserId);
+    UserAccountListRes getUserAccounts(Long coreUserId);
 
     /**
      * 입출금 통장 계좌를 생성합니다.

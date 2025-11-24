@@ -2,6 +2,7 @@ package dev.syntax.domain.account.controller;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
+import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.global.response.ApiResponseUtil;
@@ -10,10 +11,7 @@ import dev.syntax.global.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 계좌 관련 컨트롤러
@@ -45,6 +43,22 @@ public class AccountController {
     public ResponseEntity<BaseResponse<?>> createDepositAccount(@Valid @RequestBody DepositAccountReq req) {
         Account account = accountService.createChildDepositAccount(req);
         AccountItemRes response = AccountItemRes.from(account);
+        return ApiResponseUtil.success(SuccessCode.OK, response);
+    }
+
+    /**
+     * 사용자 전체 계좌 조회 API
+     * <p>
+     * 특정 사용자의 전체 계좌를 조회합니다.
+     * 부모일 경우 자녀의 계좌까지 포함하여 반환합니다.
+     * </p>
+     *
+     * @param userId 사용자 ID // 다음 PR에서 헤더로 변경될 예정입니다.
+     * @return 계좌 목록
+     */
+    @GetMapping
+    public ResponseEntity<BaseResponse<?>> getAccounts(@RequestParam Long userId) {
+        UserAccountListRes response = accountService.getUserAccounts(userId);
         return ApiResponseUtil.success(SuccessCode.OK, response);
     }
 }
