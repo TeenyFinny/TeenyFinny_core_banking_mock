@@ -118,15 +118,11 @@ public class AutoTransferServiceImpl implements AutoTransferService {
             // (상태 + 다음 실행일) → REQUIRES_NEW 트랜잭션으로 별도 반영
             updateStatusAndNextDate(t, AutoTransferStatus.SUCCESS);
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
 
             // 출금/입금 중 오류 발생 시 FAIL 상태 저장
             updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
         }
-
-        // execute() 트랜잭션에서는 상태 저장을 다시 수행하지 않음
-        // UPDATE는 REQUIRES_NEW 메서드에서 이미 커밋됨
-        autoTransferRepository.save(t);
     }
 
     /**
