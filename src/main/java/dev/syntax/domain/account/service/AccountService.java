@@ -1,6 +1,7 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.user.entity.CoreUser;
 
@@ -33,4 +34,6 @@ public interface AccountService {
      * @return 생성된 계좌
      */
     Account createDepositAccount(CoreUser user);
+
+    Account createChildDepositAccount(DepositAccountReq req);
 }
