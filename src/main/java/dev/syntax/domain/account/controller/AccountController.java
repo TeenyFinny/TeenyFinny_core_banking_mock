@@ -4,7 +4,6 @@ import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.service.AccountService;
-import dev.syntax.domain.user.service.InitService;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
 import dev.syntax.global.response.SuccessCode;
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountController {
 
     private final AccountService accountService;
-    private final InitService initService;
 
     /**
      * 자녀 계좌 생성 API
