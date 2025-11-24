@@ -1,7 +1,6 @@
 package dev.syntax.domain.user.controller;
 
 import dev.syntax.domain.user.dto.ChannelUserInitReq;
-import dev.syntax.domain.user.dto.ChannelUserInitRes;
 import dev.syntax.domain.user.service.InitService;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
@@ -14,31 +13,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 은행 업무 관련 컨트롤러
- * <p>
- * 사용자 초기화 등 은행 핵심 업무를 처리합니다.
- * </p>
- */
 @RestController
 @RequestMapping("/core/banking")
 @RequiredArgsConstructor
 public class BankingController {
 
-    private final InitService  initService;
+    private final InitService initService;
 
     /**
-     * 부모 사용자 초기화 API
+     * 사용자 생성 API
      * <p>
-     * 부모 사용자 가입 시 CoreUser 생성, 계좌 생성, 초기 잔액 입금을 처리합니다.
+     * 요청의 Role에 따라 부모와 자녀를 구분하여 처리합니다.
      * </p>
+     * <ul>
+     *   <li>PARENT: CoreUser 생성, 계좌 생성, 초기 잔액 100만원 입금</li>
+     *   <li>CHILD: CoreUser 생성만 (계좌 생성 및 가족 관계 등록 없음)</li>
+     * </ul>
      *
-     * @param request 사용자 초기화 요청 정보
-     * @return 생성된 사용자 ID와 계좌 정보
+     * @param request 사용자 생성 요청 정보 (Role 포함)
+     * @return 부모인 경우 ParentUserInitRes, 자녀인 경우 ChildUserInitRes
      */
     @PostMapping("/init")
-    public ResponseEntity<BaseResponse<?>> createCoreUser(@Valid @RequestBody ChannelUserInitReq request){
-        ChannelUserInitRes response = initService.initChannelParentUser(request);
+    public ResponseEntity<BaseResponse<?>> createCoreUser(@Valid @RequestBody ChannelUserInitReq request) {
+        Object response = initService.initChannelUser(request);
         return ApiResponseUtil.success(SuccessCode.OK, response);
     }
 }
