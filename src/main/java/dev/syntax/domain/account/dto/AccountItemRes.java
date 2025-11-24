@@ -2,9 +2,8 @@ package dev.syntax.domain.account.dto;
 
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.enums.AccountType;
+import dev.syntax.global.service.Utils;
 import lombok.Builder;
-
-import static dev.syntax.global.service.Utils.NumberFormattingService;
 
 /**
  * AccountItemRes
@@ -36,7 +35,7 @@ public record AccountItemRes(
      * @return 변환된 AccountItemRes DTO
      */
     public static AccountItemRes from(Account account) {
-        String balance = NumberFormattingService(account.getBalance());
+        String balance = Utils.NumberFormattingService(account.getBalance());
         return AccountItemRes.builder()
                 .accountId(account.getId())
                 .accountNumber(account.getNumber())
