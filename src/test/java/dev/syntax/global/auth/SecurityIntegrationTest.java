@@ -5,10 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,17 +26,25 @@ class SecurityIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("인증이 필요 없는 공개 엔드포인트 접근 성공 (401/403만 아니면 성공)")
+    @DisplayName("인증이 필요 없는 공개 엔드포인트 접근 성공")
     void accessPublicEndpoint_ShouldSucceed() throws Exception {
 
-        int status = mockMvc.perform(get("/core/banking/init"))
-                .andReturn()
-                .getResponse()
-                .getStatus();
+        String requestBody = """
+                {
+                    "channelUserId": 1,
+                    "role": "PARENT",
+                    "name": "홍길동",
+                    "phoneNumber": "010-1234-5678",
+                    "birthDate": "2010-01-01"
+                }
+                """;
 
-        // 보안이 막지만 않으면 성공
-        assert status != 401 && status != 403;
+        mockMvc.perform(post("/core/banking/init")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk());
     }
+
 
     @Test
     @DisplayName("API Key 없이 보호된 엔드포인트 접근 시 401 응답")
