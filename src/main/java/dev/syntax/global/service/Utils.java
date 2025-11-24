@@ -1,5 +1,8 @@
 package dev.syntax.global.service;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+
 /**
  * 공통적으로 사용되는 서비스 로직은 이곳에 작성해주세요.
  */
@@ -20,5 +23,24 @@ public class Utils {
      */
     public static String NumberFormattingService(int num) {
         return String.format("%,d", num);
+    }
+
+    /**
+     * BigDecimal 값을 천 단위 구분 기호(,)가 포함된 문자열로 변환합니다.
+     * <p>
+     * 예) 230010000.00 → "230,010,000"
+     * </p>
+     *
+     * <p><b>주의:</b> 소수점 이하는 제거되고 정수 부분만 표시됩니다.
+     * 소수점을 포함하려면 {@code String.format("%,.2f", num.doubleValue())}를 사용하세요.</p>
+     *
+     * @param num 천 단위 구분 기호로 포맷할 BigDecimal 값
+     * @return 천 단위 구분 기호가 포함된 문자열 (소수점 제거)
+     */
+    public static String NumberFormattingService(BigDecimal num) {
+        if (num == null) {
+            return "0";
+        }
+        return new DecimalFormat("#,###").format(num);
     }
 }

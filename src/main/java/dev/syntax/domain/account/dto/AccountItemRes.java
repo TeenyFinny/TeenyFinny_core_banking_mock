@@ -2,9 +2,8 @@ package dev.syntax.domain.account.dto;
 
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.enums.AccountType;
+import dev.syntax.global.service.Utils;
 import lombok.Builder;
-
-import java.math.BigDecimal;
 
 /**
  * AccountItemRes
@@ -20,14 +19,14 @@ import java.math.BigDecimal;
  * @param accountId     계좌 PK
  * @param accountNumber 계좌번호 (예: 1234-567-890123)
  * @param accountType   계좌 유형 (입출금, 적금 등)
- * @param balance       현재 계좌 잔액
+ * @param balance       현재 계좌 잔액 (String 처리)
  */
 @Builder
 public record AccountItemRes(
         Long accountId,
         String accountNumber,
         AccountType accountType,
-        BigDecimal balance
+        String balance
 ) {
     /**
      * Account 엔티티를 AccountItemRes로 변환합니다.
@@ -36,11 +35,12 @@ public record AccountItemRes(
      * @return 변환된 AccountItemRes DTO
      */
     public static AccountItemRes from(Account account) {
+        String balance = Utils.NumberFormattingService(account.getBalance());
         return AccountItemRes.builder()
                 .accountId(account.getId())
                 .accountNumber(account.getNumber())
                 .accountType(account.getType())
-                .balance(account.getBalance())
+                .balance(balance)
                 .build();
     }
 }
