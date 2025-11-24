@@ -4,12 +4,12 @@ import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.user.entity.CoreUser;
 
 /**
- * 사용자 초기화 응답 DTO
+ * 부모 사용자 초기화 응답 DTO
  *
  * @param coreUserId Core 사용자 ID
  * @param account 계좌 정보
  */
-public record ChannelUserInitRes(
+public record ParentUserInitRes(
 	Long coreUserId,
     AccountItemRes account
 ) {
@@ -20,8 +20,8 @@ public record ChannelUserInitRes(
      * @param account 계좌 엔티티
      * @return 생성된 ChannelUserInitRes DTO
      */
-    public static ChannelUserInitRes from(CoreUser coreUser, AccountItemRes account) {
-        return new ChannelUserInitRes(
+    public static ParentUserInitRes from(CoreUser coreUser, AccountItemRes account) {
+        return new ParentUserInitRes(
                 coreUser.getId(),
                 account
         );
