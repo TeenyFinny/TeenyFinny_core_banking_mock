@@ -1,0 +1,29 @@
+package dev.syntax.domain.user.dto;
+
+import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.user.entity.CoreUser;
+
+/**
+ * 사용자 초기화 응답 DTO
+ *
+ * @param coreUserId Core 사용자 ID
+ * @param account 계좌 정보
+ */
+public record ChannelUserInitRes(
+	Long coreUserId,
+    AccountItemRes account
+) {
+    /**
+     * CoreUser와 Account 엔티티로부터 ChannelUserInitRes를 생성합니다.
+     *
+     * @param coreUser Core 사용자 엔티티
+     * @param account 계좌 엔티티
+     * @return 생성된 ChannelUserInitRes DTO
+     */
+    public static ChannelUserInitRes from(CoreUser coreUser, AccountItemRes account) {
+        return new ChannelUserInitRes(
+                coreUser.getId(),
+                account
+        );
+    }
+}
