@@ -6,6 +6,7 @@ import dev.syntax.domain.user.service.InitService;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
 import dev.syntax.global.response.SuccessCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +37,7 @@ public class BankingController {
      * @return 생성된 사용자 ID와 계좌 정보
      */
     @PostMapping("/init")
-    public ResponseEntity<BaseResponse<?>> createCoreUser(@RequestBody ChannelUserInitReq request){
+    public ResponseEntity<BaseResponse<?>> createCoreUser(@Valid @RequestBody ChannelUserInitReq request){
         ChannelUserInitRes response = initService.initChannelParentUser(request);
         return ApiResponseUtil.success(SuccessCode.OK, response);
     }
