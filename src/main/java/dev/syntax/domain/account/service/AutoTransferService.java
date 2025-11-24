@@ -67,5 +67,5 @@ public interface AutoTransferService {
      *
      * @return 오늘 실행될 자동이체 목록
      */
-    List<AutoTransfer> findTodayTransfers();
+    List<AutoTransfer> findTransfersByDate(LocalDate date);
 }

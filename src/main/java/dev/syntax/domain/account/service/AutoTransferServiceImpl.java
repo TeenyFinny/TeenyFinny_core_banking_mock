@@ -154,8 +154,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
      * </p>
      */
     @Override
-    public List<AutoTransfer> findTodayTransfers() {
-        LocalDate today = LocalDate.now();
-        return autoTransferRepository.findByNextTransferDay(today);
+    public List<AutoTransfer> findTransfersByDate(LocalDate date) {
+        return autoTransferRepository.findByNextTransferDay(date);
     }
 }
