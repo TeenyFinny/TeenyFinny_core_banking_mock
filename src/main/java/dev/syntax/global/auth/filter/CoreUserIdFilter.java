@@ -8,19 +8,23 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
 
 /**
- * Core 서버 API 호출 시 core-user-id 헤더를 강제하는 필터입니다.
+ * Core 서버 API 호출 시 core-user-id 헤더를 검증하고 SecurityContext에 저장하는 필터입니다.
  * - 헤더: X-Core-User-Id
  * - 예외 경로:
  *   - /core/banking/init
  *   - /test/**
  *
- * 현재는 헤더 존재 + 숫자 형식까지만 검증합니다.
+ * 헤더 존재 + 숫자 형식 검증 후, SecurityContext에 저장하여
+ * 컨트롤러에서 @RequestHeader 없이 사용 가능하도록 합니다.
  * (추후 필요 시 DB 조회로 확장 가능)
  */
 public class CoreUserIdFilter extends OncePerRequestFilter {
@@ -57,12 +61,18 @@ public class CoreUserIdFilter extends OncePerRequestFilter {
             return;
         }
 
+        Long coreUserId;
         try {
-            Long.parseLong(userId);
+            coreUserId = Long.parseLong(userId);
         } catch (NumberFormatException ex) {
             writeError(response, ErrorAuthCode.BAD_REQUEST);
             return;
         }
+
+        // SecurityContext에 CoreUserId 저장
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(coreUserId, null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
