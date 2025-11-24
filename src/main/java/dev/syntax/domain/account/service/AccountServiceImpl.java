@@ -1,15 +1,14 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.dto.ChildAccountInfoRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
+import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.user.entity.CoreUser;
-import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
-import dev.syntax.domain.user.repository.CoreUserRepository;
-import dev.syntax.domain.user.service.InitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,18 +21,29 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AccountServiceImpl implements AccountService {
 
-    private final CoreUserRepository coreUserRepository;
-    private final CoreUserRelationshipRepository relationshipRepository;
     private final AccountRepository accountRepository;
-    private final InitService initService;
+    private final dev.syntax.domain.user.repository.CoreUserRepository coreUserRepository;
+    private final dev.syntax.domain.user.repository.CoreUserRelationshipRepository coreUserRelationshipRepository;
 
     @Override
-    public List<AccountItemRes> getUserAccounts(Long coreUserId) {
-        List<Account> accounts = accountRepository.findAllByUserId(coreUserId);
-
-        return accounts.stream()
+    public UserAccountListRes getUserAccounts(Long coreUserId) {
+        // 1. 본인 계좌 조회
+        List<AccountItemRes> myAccounts = accountRepository.findAllByUserId(coreUserId).stream()
                 .map(AccountItemRes::from)
                 .toList();
+
+        // 2. 자녀 계좌 조회 (부모일 경우)
+        List<ChildAccountInfoRes> children = coreUserRelationshipRepository.findAllByParent_Id(coreUserId).stream()
+                .map(relationship -> {
+                    Long childId = relationship.getChild().getId();
+                    List<AccountItemRes> childAccounts = accountRepository.findAllByUserId(childId).stream()
+                            .map(AccountItemRes::from)
+                            .toList();
+                    return new ChildAccountInfoRes(childId, childAccounts);
+                })
+                .toList();
+
+        return new UserAccountListRes(myAccounts, children);
     }
 
     @Transactional
@@ -76,7 +86,7 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new dev.syntax.global.exception.BusinessException(dev.syntax.global.response.error.ErrorBaseCode.CHILD_USER_NOT_FOUND));
 
         // 기존 가족 관계 확인
-        boolean relationshipExists = relationshipRepository.existsByParentAndChild(parent, child);
+        boolean relationshipExists = coreUserRelationshipRepository.existsByParentAndChild(parent, child);
         if (relationshipExists) {
             throw new dev.syntax.global.exception.BusinessException(dev.syntax.global.response.error.ErrorBaseCode.CONFLICT);
         }
@@ -86,7 +96,7 @@ public class AccountServiceImpl implements AccountService {
                 .parent(parent)
                 .child(child)
                 .build();
-        relationshipRepository.save(relationship);
+        coreUserRelationshipRepository.save(relationship);
 
         return child;
     }
