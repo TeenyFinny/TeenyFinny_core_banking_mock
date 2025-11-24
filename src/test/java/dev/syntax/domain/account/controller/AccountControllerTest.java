@@ -14,6 +14,7 @@ import dev.syntax.global.response.error.ErrorBaseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.availability.ApplicationAvailability;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
@@ -52,6 +53,9 @@ class AccountControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
+    private ApplicationAvailability applicationAvailability;
+
+    @MockitoBean
     private AccountService accountService;
 
     @MockitoBean
@@ -82,9 +86,7 @@ class AccountControllerTest {
                 .type(AccountType.DEPOSIT)
                 .build();
 
-        given(initService.createFamilyRelationship(any()))
-                .willReturn(child);
-        given(accountService.createDepositAccount(child))
+        given(accountService.createChildDepositAccount(any()))
                 .willReturn(account);
 
         // when & then
@@ -105,8 +107,8 @@ class AccountControllerTest {
         // given
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(initService.createFamilyRelationship(any()))
-                .willThrow(new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+        given(accountService.createChildDepositAccount(any()))
+                .willThrow(new BusinessException(ErrorBaseCode.PARENT_USER_NOT_FOUND));
 
         // when & then
         mockMvc.perform(post("/core/banking/account/create")
@@ -122,8 +124,8 @@ class AccountControllerTest {
         // given
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(initService.createFamilyRelationship(any()))
-                .willThrow(new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+        given(accountService.createChildDepositAccount(any()))
+                .willThrow(new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
 
         mockMvc.perform(post("/core/banking/account/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -138,7 +140,7 @@ class AccountControllerTest {
         // given
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(initService.createFamilyRelationship(any()))
+        given(accountService.createChildDepositAccount(any()))
                 .willThrow(new BusinessException(ErrorBaseCode.CONFLICT));
 
         mockMvc.perform(post("/core/banking/account/create")

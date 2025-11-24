@@ -219,7 +219,7 @@ class InitServiceImplTest {
             // when & then
             assertThatThrownBy(() -> initService.createFamilyRelationship(req))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessage(ErrorBaseCode.USER_NOT_FOUND.getMessage());
+                    .hasMessage(ErrorBaseCode.PARENT_USER_NOT_FOUND.getMessage());
 
             verify(coreUserRepository).findById(1L);
             verify(coreUserRepository, never()).findById(2L);
@@ -243,7 +243,7 @@ class InitServiceImplTest {
             // when & then
             assertThatThrownBy(() -> initService.createFamilyRelationship(req))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessage(ErrorBaseCode.USER_NOT_FOUND.getMessage());
+                    .hasMessage(ErrorBaseCode.CHILD_USER_NOT_FOUND.getMessage());
 
             verify(coreUserRepository).findById(1L);
             verify(coreUserRepository).findById(2L);
