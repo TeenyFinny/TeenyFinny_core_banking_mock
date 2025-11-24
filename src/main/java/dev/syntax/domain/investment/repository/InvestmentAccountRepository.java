@@ -17,4 +17,7 @@ public interface InvestmentAccountRepository extends JpaRepository<InvestmentAcc
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"))
     @Override
     Optional<InvestmentAccount> findById(String cano);
+
+    // [락 X] - getPortfolio 등 읽기 전용 트랜잭션에서 사용 (추가 필요)
+    Optional<InvestmentAccount> findByCano(String cano);
 }

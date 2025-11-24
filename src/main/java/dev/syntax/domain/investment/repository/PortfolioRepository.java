@@ -3,6 +3,8 @@ package dev.syntax.domain.investment.repository;
 import dev.syntax.domain.investment.entity.Portfolio;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -18,4 +20,5 @@ public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"))
     Optional<Portfolio> findByCano_CanoAndProductCode(String cano, String productCode);
 
+    List<Portfolio> findByCano_Cano(String cano);
 }

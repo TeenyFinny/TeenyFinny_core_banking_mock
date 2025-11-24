@@ -50,7 +50,7 @@ public class KisStockApiClient {
             "011200"  // HMM
     );
 
-    public MultiPriceRes getMultiPrice() {
+    public MultiPriceRes getPrices(List<String> codes) {
 
         WebClient client = kisClient
                 .mutate()
@@ -60,7 +60,7 @@ public class KisStockApiClient {
         return client.get()
                 .uri(uriBuilder -> {
                     uriBuilder.path(URL);
-                    for (int i = 0; i < DEFAULT_CODES.size(); i++) {
+                    for (int i = 0; i < codes.size(); i++) {
                         int n = i + 1;
                         uriBuilder.queryParam("FID_INPUT_ISCD_" + n, DEFAULT_CODES.get(i));
                         uriBuilder.queryParam("FID_COND_MRKT_DIV_CODE_" + n, "J");
@@ -70,6 +70,11 @@ public class KisStockApiClient {
                 .retrieve()
                 .bodyToMono(MultiPriceRes.class)
                 .block();
+    }
+
+    /** 전체(30개) 종목 조회 */
+    public MultiPriceRes getMultiPrice() {
+        return getPrices(DEFAULT_CODES);
     }
 
 }
