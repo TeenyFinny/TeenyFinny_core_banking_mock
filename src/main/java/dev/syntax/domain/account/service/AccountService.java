@@ -1,6 +1,8 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.user.entity.CoreUser;
 
 import java.util.List;
 
@@ -23,4 +25,12 @@ public interface AccountService {
      * @return 사용자 계좌 목록 (없을 경우 빈 리스트)
      */
     List<AccountItemRes> getUserAccounts(Long coreUserId);
+
+    /**
+     * 입출금 통장 계좌를 생성합니다.
+     *
+     * @param user 계좌 소유자
+     * @return 생성된 계좌
+     */
+    Account createDepositAccount(CoreUser user);
 }
