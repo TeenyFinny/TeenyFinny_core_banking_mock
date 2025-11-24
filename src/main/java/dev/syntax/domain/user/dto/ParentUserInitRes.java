@@ -14,11 +14,11 @@ public record ParentUserInitRes(
     AccountItemRes account
 ) implements UserInitRes {
     /**
-     * CoreUser와 Account 엔티티로부터 ChannelUserInitRes를 생성합니다.
+     * CoreUser 엔티티와 AccountItemRes DTO로부터 ParentUserInitRes를 생성합니다.
      *
      * @param coreUser Core 사용자 엔티티
-     * @param account 계좌 엔티티
-     * @return 생성된 ChannelUserInitRes DTO
+     * @param account  계좌 정보 DTO
+     * @return 생성된 ParentUserInitRes DTO
      */
     public static ParentUserInitRes from(CoreUser coreUser, AccountItemRes account) {
         return new ParentUserInitRes(

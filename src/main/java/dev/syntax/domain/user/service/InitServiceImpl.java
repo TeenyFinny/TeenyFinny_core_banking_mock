@@ -97,15 +97,14 @@ public class InitServiceImpl implements InitService {
     }
 
     /**
-     * 회원 등록을 처리합니다.
+     * CoreUser를 생성하고 저장합니다.
      * <p>
-     * 요청된 역할(Role)에 맞는 CoreUser를 생성합니다. 이미 등록된 사용자인 경우 예외를 발생시킵니다.
-     * 계좌 생성 및 가족 관계 등록은 이 메서드에서 처리하지 않으며, 호출하는 메서드에서 별도로 처리해야 합니다.
+     * 채널 사용자 ID로 중복 여부를 확인하고, 중복되지 않은 경우 새로운 CoreUser를 생성하여 저장합니다.
+     * 계좌 생성 및 가족 관계 등록은 이 메서드에서 처리하지 않습니다.
      * </p>
      *
-     * @param req 사용자 초기화 요청 정보
+     * @param req 사용자 생성 요청 정보
      * @return 생성된 CoreUser 엔티티
-     * @throws BusinessException 요청된 역할과 실제 역할이 일치하지 않는 경우 (UNAUTHORIZED)
      * @throws BusinessException 이미 등록된 사용자인 경우 (CONFLICT)
      */
     private CoreUser registerUser(ChannelUserInitReq req) {
