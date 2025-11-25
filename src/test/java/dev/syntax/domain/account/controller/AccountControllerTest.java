@@ -78,7 +78,7 @@ class AccountControllerTest {
                 .type(AccountType.DEPOSIT)
                 .build();
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowenceAccount(1L, req))
                 .willReturn(account);
 
         // when & then
@@ -102,7 +102,7 @@ class AccountControllerTest {
 
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowenceAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.PARENT_USER_NOT_FOUND));
 
         mockMvc.perform(post("/core/banking/account/create")
@@ -122,7 +122,7 @@ class AccountControllerTest {
 
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowenceAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
 
         mockMvc.perform(post("/core/banking/account/create")
@@ -142,7 +142,7 @@ class AccountControllerTest {
 
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowenceAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.CONFLICT));
 
         mockMvc.perform(post("/core/banking/account/create")
