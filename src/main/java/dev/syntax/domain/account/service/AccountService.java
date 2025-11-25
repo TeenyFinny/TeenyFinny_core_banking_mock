@@ -1,7 +1,9 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.dto.AccountStatusUpdateRes;
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountStatus;
 import dev.syntax.domain.user.entity.CoreUser;
 
 import java.util.List;
@@ -33,4 +35,6 @@ public interface AccountService {
      * @return 생성된 계좌
      */
     Account createDepositAccount(CoreUser user);
+
+    AccountStatusUpdateRes updateStatus(String number, AccountStatus status);
 }

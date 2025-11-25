@@ -1,11 +1,15 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.dto.AccountStatusUpdateRes;
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountStatus;
 import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.global.exception.BusinessException;
+import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,5 +45,19 @@ public class AccountServiceImpl implements AccountService {
                 .build();
 
         return accountRepository.save(account);
+    }
+
+    @Override
+    @Transactional
+    public AccountStatusUpdateRes updateStatus(String number, AccountStatus status) {
+        Account account = accountRepository.findByNumber(number)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
+
+        account.updateStatus(status);
+
+        return new AccountStatusUpdateRes(
+                account.getId(),
+                account.getStatus()
+        );
     }
 }

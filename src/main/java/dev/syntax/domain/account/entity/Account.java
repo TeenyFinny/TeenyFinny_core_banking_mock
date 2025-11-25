@@ -88,4 +88,7 @@ public class Account extends BaseTimeEntity {
         this.balance = this.balance.subtract(amount);
     }
 
+    public void updateStatus(AccountStatus status) {
+        this.status = status;
+    }
 }
