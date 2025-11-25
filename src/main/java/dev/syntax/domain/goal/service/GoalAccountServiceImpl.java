@@ -1,6 +1,6 @@
 package dev.syntax.domain.goal.service;
 
-
+import dev.syntax.domain.goal.dto.GoalAccountCreateReq;
 import dev.syntax.domain.goal.dto.GoalAccountItemRes;
 import dev.syntax.domain.goal.entity.GoalAccount;
 import dev.syntax.domain.goal.repository.GoalAccountRepository;
@@ -24,26 +24,23 @@ public class GoalAccountServiceImpl implements GoalAccountService {
 
     @Override
     @Transactional
-    public GoalAccountItemRes createGoalAccount(Long userId, String goalName) {
+    public GoalAccountItemRes createGoalAccount(Long userId, GoalAccountCreateReq req) {
+
         // 1. 사용자 조회
         CoreUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
 
-        // 2. 계좌 생성
+        // 2. 목표 계좌 생성
         GoalAccount account = GoalAccount.builder()
                 .user(user)
-                .goalName(goalName)
+                .goalName(req.name())
                 .balance(BigDecimal.ZERO)
-                .accountNumber(UUID.randomUUID().toString()) // UUID 생성
+                .accountNumber(UUID.randomUUID().toString())
                 .build();
 
+        // 3. 저장 후 엔티티 반환
         goalAccountRepository.save(account);
 
-        // 3. DTO 반환
-        return GoalAccountItemRes.builder()
-                .accountNumber(account.getAccountNumber())
-                .userId(user.getId())
-                .balance(account.getBalance())
-                .build();
+        return GoalAccountItemRes.from(account);
     }
 }
