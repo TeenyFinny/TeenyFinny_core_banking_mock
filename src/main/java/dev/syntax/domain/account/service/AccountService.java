@@ -37,5 +37,7 @@ public interface AccountService {
      */
     Account createDepositAccount(CoreUser user);
 
-    Account createChildDepositAccount(Long id, DepositAccountReq req);
+    Account createAllowenceAccount(CoreUser user);
+
+    Account createChildAllowenceAccount(Long id, DepositAccountReq req);
 }

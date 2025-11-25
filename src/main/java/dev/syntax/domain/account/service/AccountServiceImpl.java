@@ -80,12 +80,27 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional
-    public Account createChildDepositAccount(Long id, DepositAccountReq req) {
+    @Override
+    public Account createAllowenceAccount(CoreUser user) {
+        Account account = Account.builder()
+                .user(user)
+                .number(AccountNumberGenerator.generate())
+                .productName("용돈 통장")
+                .interestRate(new BigDecimal("0.001")) // 0.1%
+                .type(AccountType.ALLOWANCE)
+                .build();
+
+        return accountRepository.save(account);
+    }
+
+    @Transactional
+    @Override
+    public Account createChildAllowenceAccount(Long id, DepositAccountReq req) {
         if (!Objects.equals(id, req.parentCoreId())) {
             throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
         }
         CoreUser child = createFamilyRelationship(req);
-        return createDepositAccount(child);
+        return createAllowenceAccount(child);
     }
 
     /**
