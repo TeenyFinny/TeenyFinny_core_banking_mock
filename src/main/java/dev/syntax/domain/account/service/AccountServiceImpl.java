@@ -12,6 +12,7 @@ import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
+import dev.syntax.global.response.error.ErrorAuthCode;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -78,7 +80,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional
-    public Account createChildDepositAccount(DepositAccountReq req) {
+    public Account createChildDepositAccount(Long id, DepositAccountReq req) {
+        if (!Objects.equals(id, req.parentCoreId())) {
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        }
         CoreUser child = createFamilyRelationship(req);
         return createDepositAccount(child);
     }

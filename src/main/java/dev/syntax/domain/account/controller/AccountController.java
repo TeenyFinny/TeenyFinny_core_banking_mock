@@ -9,13 +9,10 @@ import dev.syntax.global.auth.annotation.CurrentUserId;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
 import dev.syntax.global.response.SuccessCode;
-import dev.syntax.global.response.error.ErrorAuthCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Objects;
 
 /**
  * 계좌 관련 컨트롤러
@@ -45,10 +42,7 @@ public class AccountController {
      */
     @PostMapping("/create")
     public ResponseEntity<BaseResponse<?>> createDepositAccount(@CurrentUserId Long userId, @Valid @RequestBody DepositAccountReq req) {
-        if (!Objects.equals(userId, req.parentCoreId())) {
-            return ApiResponseUtil.failure(ErrorAuthCode.ACCESS_DENIED);
-        }
-        Account account = accountService.createChildDepositAccount(req);
+        Account account = accountService.createChildDepositAccount(userId, req);
         AccountItemRes response = AccountItemRes.from(account);
         return ApiResponseUtil.success(SuccessCode.OK, response);
     }
