@@ -28,4 +28,5 @@ public interface InitService {
      * @throws BusinessException 잘못된 Role인 경우 (UNAUTHORIZED)
      */
     UserInitRes initChannelUser(ChannelUserInitReq req);
+
 }
