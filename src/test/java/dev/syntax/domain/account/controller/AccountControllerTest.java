@@ -7,17 +7,17 @@ import dev.syntax.domain.account.enums.AccountStatus;
 import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.domain.user.entity.CoreUser;
-import dev.syntax.domain.user.service.InitService;
+import dev.syntax.global.TestSecurityConfig;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.filter.ReadinessFilter;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.availability.ApplicationAvailability;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,18 +25,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * 계좌 컨트롤러 테스트
- * <p>
- * 자녀 계좌 생성 API의 엔드포인트 분기, 상태코드, 서비스 호출 여부를 검증합니다.
- * </p>
- */
 @WebMvcTest(
         controllers = AccountController.class,
         excludeFilters = @ComponentScan.Filter(
@@ -44,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 classes = ReadinessFilter.class
         )
 )
+@Import(TestSecurityConfig.class)
 class AccountControllerTest {
 
     @Autowired
@@ -53,17 +47,15 @@ class AccountControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private ApplicationAvailability applicationAvailability;
-
-    @MockitoBean
     private AccountService accountService;
 
-    @MockitoBean
-    private InitService initService;
-
+    /* ------------------------------------------------------
+        성공 케이스
+    ------------------------------------------------------ */
     @Test
     @DisplayName("자녀 계좌 생성 성공")
     void createDepositAccount_success() throws Exception {
+
         // given
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
@@ -86,11 +78,12 @@ class AccountControllerTest {
                 .type(AccountType.DEPOSIT)
                 .build();
 
-        given(accountService.createChildDepositAccount(any()))
+        given(accountService.createChildDepositAccount(1L, req))
                 .willReturn(account);
 
         // when & then
         mockMvc.perform(post("/core/banking/account/create")
+                        .header("X-Core-User-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -98,52 +91,63 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.data.accountId").value(2))
                 .andExpect(jsonPath("$.data.accountNumber").value("1687-807-144644"))
                 .andExpect(jsonPath("$.data.accountType").value("DEPOSIT"))
-                .andExpect(jsonPath("$.data.balance").value("0")); // 문자열 비교
+                .andExpect(jsonPath("$.data.balance").value("0"));
     }
 
+    /* ------------------------------------------------------
+        실패 케이스 - 부모 없음
+    ------------------------------------------------------ */
     @Test
-    @DisplayName("자녀 계좌 생성 실패 - 부모를 찾을 수 없음")
+    @DisplayName("자녀 계좌 생성 실패 - 부모 없음")
     void createDepositAccount_fail_parentNotFound() throws Exception {
-        // given
+
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(any()))
+        given(accountService.createChildDepositAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.PARENT_USER_NOT_FOUND));
 
-        // when & then
         mockMvc.perform(post("/core/banking/account/create")
+                        .header("X-Core-User-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }
 
+    /* ------------------------------------------------------
+        실패 케이스 - 자녀 없음
+    ------------------------------------------------------ */
     @Test
-    @DisplayName("자녀 계좌 생성 실패 - 자녀를 찾을 수 없음")
+    @DisplayName("자녀 계좌 생성 실패 - 자녀 없음")
     void createDepositAccount_fail_childNotFound() throws Exception {
-        // given
+
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(any()))
+        given(accountService.createChildDepositAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
 
         mockMvc.perform(post("/core/banking/account/create")
+                        .header("X-Core-User-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }
 
+    /* ------------------------------------------------------
+        실패 케이스 - 관계 이미 존재
+    ------------------------------------------------------ */
     @Test
-    @DisplayName("자녀 계좌 생성 실패 - 이미 존재하는 가족 관계")
+    @DisplayName("자녀 계좌 생성 실패 - 가족 관계 이미 존재")
     void createDepositAccount_fail_relationshipExists() throws Exception {
-        // given
+
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(any()))
+        given(accountService.createChildDepositAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.CONFLICT));
 
         mockMvc.perform(post("/core/banking/account/create")
+                        .header("X-Core-User-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isConflict())
