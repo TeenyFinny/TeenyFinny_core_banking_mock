@@ -6,12 +6,9 @@ import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
-import dev.syntax.global.response.ApiResponseUtil;
-import dev.syntax.global.response.BaseResponse;
-import dev.syntax.global.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -41,10 +38,10 @@ public class AccountController {
      * @return 생성된 계좌 정보
      */
     @PostMapping("/create")
-    public ResponseEntity<BaseResponse<?>> createDepositAccount(@CurrentUserId Long userId, @Valid @RequestBody DepositAccountReq req) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public AccountItemRes createDepositAccount(@CurrentUserId Long userId, @Valid @RequestBody DepositAccountReq req) {
         Account account = accountService.createChildDepositAccount(userId, req);
-        AccountItemRes response = AccountItemRes.from(account);
-        return ApiResponseUtil.success(SuccessCode.OK, response);
+        return AccountItemRes.from(account);
     }
 
     /**
@@ -61,8 +58,7 @@ public class AccountController {
      * @return 계좌 목록
      */
     @GetMapping
-    public ResponseEntity<BaseResponse<?>> getAccounts(@CurrentUserId Long userId) {
-        UserAccountListRes response = accountService.getUserAccounts(userId);
-        return ApiResponseUtil.success(SuccessCode.OK, response);
+    public UserAccountListRes getAccounts(@CurrentUserId Long userId) {
+        return accountService.getUserAccounts(userId);
     }
 }

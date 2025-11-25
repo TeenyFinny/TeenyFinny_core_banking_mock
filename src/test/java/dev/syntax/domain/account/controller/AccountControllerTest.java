@@ -86,12 +86,11 @@ class AccountControllerTest {
                         .header("X-Core-User-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.accountId").value(2))
-                .andExpect(jsonPath("$.data.accountNumber").value("1687-807-144644"))
-                .andExpect(jsonPath("$.data.accountType").value("DEPOSIT"))
-                .andExpect(jsonPath("$.data.balance").value("0"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.accountId").value(2))
+                .andExpect(jsonPath("$.accountNumber").value("1687-807-144644"))
+                .andExpect(jsonPath("$.accountType").value("DEPOSIT"))
+                .andExpect(jsonPath("$.balance").value("0"));
     }
 
     /* ------------------------------------------------------
