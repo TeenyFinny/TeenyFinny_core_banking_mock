@@ -11,6 +11,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByAccount_IdOrderByTransactionDateDesc(Long AccountId);
 
-    @Query("select a from Transaction a where a.account.number = :number")
-    List<Transaction> findByNumberdOrderByTransactionDateDesc(@Param("number") String number);
+    @Query("select a from Transaction a where a.account.number = :number order by a.transactionDate desc")
+    List<Transaction> findByNumberOrderByTransactionDateDesc(@Param("number") String number);
 }
