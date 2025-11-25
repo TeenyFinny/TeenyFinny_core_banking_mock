@@ -61,6 +61,7 @@ class GoalAccountServiceImplTest {
         assertThat(saved.getUser()).isEqualTo(user);
         assertThat(saved.getGoalName()).isEqualTo(goalName);
         assertThat(saved.getBalance()).isEqualTo(BigDecimal.ZERO);
+        assertThat(saved.getAccountNumber()).isNotNull();
     }
 
     @Test

@@ -29,7 +29,7 @@ public class GoalAccount extends BaseEntity {
     private String goalName;
 
     @Column(name = "account_number", nullable = false, unique = true)
-    private String accountNumber = UUID.randomUUID().toString(); // 자동 생성
+    private String accountNumber;
 
     @Column(name = "balance", nullable = false)
     private BigDecimal balance;

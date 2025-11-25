@@ -1,5 +1,6 @@
 package dev.syntax.domain.goal.service;
 
+import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.goal.dto.GoalAccountCreateReq;
 import dev.syntax.domain.goal.dto.GoalAccountItemRes;
 import dev.syntax.domain.goal.entity.GoalAccount;
@@ -35,7 +36,7 @@ public class GoalAccountServiceImpl implements GoalAccountService {
                 .user(user)
                 .goalName(req.name())
                 .balance(BigDecimal.ZERO)
-                .accountNumber(UUID.randomUUID().toString())
+                .accountNumber(AccountNumberGenerator.generate())
                 .build();
 
         // 3. 저장 후 엔티티 반환

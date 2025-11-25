@@ -1,13 +1,12 @@
 package dev.syntax.domain.goal.dto;
 
+import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.goal.entity.GoalAccount;
 import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class GoalAccountItemRes {
     private String accountNumber;
@@ -19,6 +18,7 @@ public class GoalAccountItemRes {
                 .accountNumber(account.getAccountNumber())
                 .userId(account.getUser().getId())
                 .balance(account.getBalance())
+                .accountNumber(account.getAccountNumber())
                 .build();
 
     }
