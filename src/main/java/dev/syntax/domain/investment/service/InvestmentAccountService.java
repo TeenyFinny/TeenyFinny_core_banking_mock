@@ -1,6 +1,5 @@
 package dev.syntax.domain.investment.service;
 
-import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.investment.entity.InvestmentAccount;
 import dev.syntax.domain.investment.repository.InvestmentAccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,7 @@ public class InvestmentAccountService {
      */
     @Transactional
     public InvestmentAccount createInvestmentAccount(Long userId, Long initialDeposit) {
-        String cano = AccountNumberGenerator.generate(); // 기존 유틸 함수 사용
+        String cano = generateCano();
 
         InvestmentAccount account = InvestmentAccount.builder()
                 .cano(cano)
@@ -33,4 +32,10 @@ public class InvestmentAccountService {
         return investmentAccountRepository.save(account);
     }
 
+    /**
+     * 8자리 계좌번호 생성
+     */
+    private String generateCano() {
+        return String.format("%08d", (int) (Math.random() * 100_000_000));
+    }
 }
