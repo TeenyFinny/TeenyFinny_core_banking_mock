@@ -71,14 +71,14 @@ class AccountControllerTest {
                 .id(2L)
                 .user(child)
                 .number("1687-807-144644")
-                .productName("입출금 통장")
+                .productName("용돈 통장")
                 .balance(BigDecimal.ZERO)
                 .interestRate(new BigDecimal("0.001"))
                 .status(AccountStatus.ACTIVE)
-                .type(AccountType.DEPOSIT)
+                .type(AccountType.ALLOWANCE)
                 .build();
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowanceAccount(1L, req))
                 .willReturn(account);
 
         // when & then
@@ -89,7 +89,7 @@ class AccountControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accountId").value(2))
                 .andExpect(jsonPath("$.accountNumber").value("1687-807-144644"))
-                .andExpect(jsonPath("$.accountType").value("DEPOSIT"))
+                .andExpect(jsonPath("$.accountType").value("ALLOWANCE"))
                 .andExpect(jsonPath("$.balance").value("0"));
     }
 
@@ -102,7 +102,7 @@ class AccountControllerTest {
 
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowanceAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.PARENT_USER_NOT_FOUND));
 
         mockMvc.perform(post("/core/banking/account/create")
@@ -122,7 +122,7 @@ class AccountControllerTest {
 
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowanceAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
 
         mockMvc.perform(post("/core/banking/account/create")
@@ -142,7 +142,7 @@ class AccountControllerTest {
 
         DepositAccountReq req = new DepositAccountReq(1L, 2L, AccountType.DEPOSIT);
 
-        given(accountService.createChildDepositAccount(1L, req))
+        given(accountService.createChildAllowanceAccount(1L, req))
                 .willThrow(new BusinessException(ErrorBaseCode.CONFLICT));
 
         mockMvc.perform(post("/core/banking/account/create")

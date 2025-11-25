@@ -39,8 +39,8 @@ public class AccountController {
      */
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public AccountItemRes createDepositAccount(@CurrentUserId Long userId, @Valid @RequestBody DepositAccountReq req) {
-        Account account = accountService.createChildDepositAccount(userId, req);
+    public AccountItemRes createChildAllowanceAccount(@CurrentUserId Long userId, @Valid @RequestBody DepositAccountReq req) {
+        Account account = accountService.createChildAllowanceAccount(userId, req);
         return AccountItemRes.from(account);
     }
 

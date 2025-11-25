@@ -68,24 +68,36 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public Account createDepositAccount(CoreUser user) {
-        Account account = Account.builder()
-                .user(user)
-                .number(AccountNumberGenerator.generate())
-                .productName("입출금 통장")
-                .interestRate(new BigDecimal("0.001")) // 0.1%
-                .type(AccountType.DEPOSIT)
-                .build();
-
+        Account account = createAccount(user, "입출금 통장", AccountType.DEPOSIT);
         return accountRepository.save(account);
     }
 
     @Transactional
-    public Account createChildDepositAccount(Long id, DepositAccountReq req) {
+    @Override
+    public Account createAllowanceAccount(CoreUser user) {
+        Account account = createAccount(user, "용돈 통장", AccountType.ALLOWANCE);
+        return accountRepository.save(account);
+    }
+
+    @Transactional
+    @Override
+    public Account createChildAllowanceAccount(Long id, DepositAccountReq req) {
         if (!Objects.equals(id, req.parentCoreId())) {
             throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
         }
         CoreUser child = createFamilyRelationship(req);
-        return createDepositAccount(child);
+        return createAllowanceAccount(child);
+    }
+
+    private Account createAccount(CoreUser user, String productName, AccountType accountType) {
+        Account account = Account.builder()
+                .user(user)
+                .number(AccountNumberGenerator.generate())
+                .productName(productName)
+                .interestRate(new BigDecimal("0.001")) // 0.1%
+                .type(accountType)
+                .build();
+        return accountRepository.save(account);
     }
 
     /**
