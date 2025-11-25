@@ -1,6 +1,7 @@
 package dev.syntax.global.config;
 
 import dev.syntax.global.auth.resolver.CurrentUserIdResolver;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -15,7 +16,10 @@ import java.util.List;
  * </p>
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
+
+    private final CurrentUserIdResolver currentUserIdResolver;
 
     /**
      * CORS 설정
@@ -36,6 +40,6 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        resolvers.add(new CurrentUserIdResolver());
+        resolvers.add(currentUserIdResolver);
     }
 }
