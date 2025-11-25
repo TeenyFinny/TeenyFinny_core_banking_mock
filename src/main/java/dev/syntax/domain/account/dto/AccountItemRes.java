@@ -2,8 +2,9 @@ package dev.syntax.domain.account.dto;
 
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.enums.AccountType;
-import dev.syntax.global.service.Utils;
 import lombok.Builder;
+
+import java.math.BigDecimal;
 
 /**
  * AccountItemRes
@@ -26,7 +27,7 @@ public record AccountItemRes(
         Long accountId,
         String accountNumber,
         AccountType accountType,
-        String balance
+        BigDecimal balance
 ) {
     /**
      * Account 엔티티를 AccountItemRes로 변환합니다.
@@ -35,12 +36,11 @@ public record AccountItemRes(
      * @return 변환된 AccountItemRes DTO
      */
     public static AccountItemRes from(Account account) {
-        String balance = Utils.NumberFormattingService(account.getBalance());
         return AccountItemRes.builder()
                 .accountId(account.getId())
                 .accountNumber(account.getNumber())
                 .accountType(account.getType())
-                .balance(balance)
+                .balance(account.getBalance())
                 .build();
     }
 }

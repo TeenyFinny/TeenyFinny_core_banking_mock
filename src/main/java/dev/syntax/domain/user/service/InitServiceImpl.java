@@ -122,8 +122,8 @@ public class InitServiceImpl implements InitService {
                 .phoneNumber(req.phoneNumber())
                 .birthDate(req.birthDate())
                 .build();
-        coreUserRepository.save(user);
 
-        return user;
+        return coreUserRepository.save(user);
     }
+
 }
