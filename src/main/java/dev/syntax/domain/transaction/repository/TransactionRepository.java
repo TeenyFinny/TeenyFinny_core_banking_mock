@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    List<Transaction> findByAccount_IdOrderByTransactionDateDesc(Long AccountId);
+    List<Transaction> findByAccount_IdOrderByTransactionDateDesc(Long accountId);
 
     @Query("select a from Transaction a where a.account.number = :number order by a.transactionDate desc")
     List<Transaction> findByNumberOrderByTransactionDateDesc(@Param("number") String number);
