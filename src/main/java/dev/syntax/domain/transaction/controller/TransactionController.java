@@ -2,7 +2,11 @@ package dev.syntax.domain.transaction.controller;
 
 import dev.syntax.domain.transaction.dto.TransactionHistoryRes;
 import dev.syntax.domain.transaction.service.TransactionService;
+import dev.syntax.global.response.ApiResponseUtil;
+import dev.syntax.global.response.BaseResponse;
+import dev.syntax.global.response.SuccessCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,9 +39,11 @@ public class TransactionController {
      * @return 거래 내역 및 잔액 정보 {@link TransactionHistoryRes}
      */
     @GetMapping("/account/{number}")
-    public TransactionHistoryRes getAccountTransactions(
+    public ResponseEntity<BaseResponse<?>> getAccountTransactions(
             @PathVariable String number
     ) {
-        return transactionService.getHistory(number);
+        TransactionHistoryRes response = transactionService.getHistory(number);
+
+        return ApiResponseUtil.success(SuccessCode.OK, response);
     }
 }
