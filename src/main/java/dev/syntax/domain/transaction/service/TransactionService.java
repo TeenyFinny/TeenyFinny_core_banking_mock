@@ -52,7 +52,7 @@ public interface TransactionService {
     /**
      * 특정 계좌의 거래내역(입금/출금/자동이체 포함)을 최신순으로 조회합니다.
      *
-     * @param number Core Account PK
+     * @param number 계좌번호
      * @return 잔액 + 거래내역 전체 리스트
      */
     TransactionHistoryRes getHistory(String number);
