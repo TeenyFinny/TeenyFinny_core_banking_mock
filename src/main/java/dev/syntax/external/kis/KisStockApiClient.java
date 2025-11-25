@@ -62,7 +62,7 @@ public class KisStockApiClient {
                     uriBuilder.path(URL);
                     for (int i = 0; i < codes.size(); i++) {
                         int n = i + 1;
-                        uriBuilder.queryParam("FID_INPUT_ISCD_" + n, DEFAULT_CODES.get(i));
+                        uriBuilder.queryParam("FID_INPUT_ISCD_" + n, codes.get(i));
                         uriBuilder.queryParam("FID_COND_MRKT_DIV_CODE_" + n, "J");
                     }
                     return uriBuilder.build();
