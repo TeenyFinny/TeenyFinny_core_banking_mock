@@ -81,7 +81,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public Account createAllowenceAccount(CoreUser user) {
+    public Account createAllowanceAccount(CoreUser user) {
         Account account = Account.builder()
                 .user(user)
                 .number(AccountNumberGenerator.generate())
@@ -95,12 +95,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public Account createChildAllowenceAccount(Long id, DepositAccountReq req) {
+    public Account createChildAllowanceAccount(Long id, DepositAccountReq req) {
         if (!Objects.equals(id, req.parentCoreId())) {
             throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
         }
         CoreUser child = createFamilyRelationship(req);
-        return createAllowenceAccount(child);
+        return createAllowanceAccount(child);
     }
 
     /**
