@@ -17,8 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +35,7 @@ public class PortfolioService {
      * 공통 포트폴리오 계산 로직
      * 모든 API는 이 계산 결과를 기반으로 응답만 다르게 만든다.
      */
-    private PortfolioCalcResult calculatePortfolio(String cano, Long userId) {
+    protected PortfolioCalcResult calculatePortfolio(String cano, Long userId) {
 
         // 1) 계좌 조회
         InvestmentAccount account = accountRepository.findByCano(cano)
@@ -195,27 +197,34 @@ public class PortfolioService {
      * 상위 3개 + 기타 비중 계산 로직
      */
     private List<TopHoldingItem> buildTopHoldings(List<HoldingItem> items) {
+        if (items.isEmpty()) {
+            return List.of(); // 보유 종목 없음
+        }
 
         List<HoldingItem> sorted = items.stream()
                 .sorted((a, b) -> Double.compare(b.weight(), a.weight()))
                 .toList();
 
-        List<TopHoldingItem> top3 = sorted.stream()
-                .limit(3)
-                .map(i -> new TopHoldingItem(i.productName(), i.weight()))
-                .toList();
+        List<TopHoldingItem> result = new ArrayList<>();
+        // 1개, 2개, 3개까지만 안전하게 추가
+        int max = Math.min(3, sorted.size());
 
-        double etcWeight = sorted.stream()
-                .skip(3)
-                .mapToDouble(HoldingItem::weight)
-                .sum();
-
-        if (etcWeight > 0) {
-            List<TopHoldingItem> list = new ArrayList<>(top3);
-            list.add(new TopHoldingItem("기타", etcWeight));
-            return list;
+        for (int i = 0; i < max; i++) {
+            result.add(new TopHoldingItem(
+                    sorted.get(i).productName(),
+                    sorted.get(i).weight()
+            ));
         }
 
-        return top3;
+        // 기타 처리
+        if (sorted.size() > 3) {
+            double etc = sorted.stream()
+                    .skip(3)
+                    .mapToDouble(HoldingItem::weight)
+                    .sum();
+            result.add(new TopHoldingItem("기타", etc));
+        }
+
+        return result;
     }
 }
