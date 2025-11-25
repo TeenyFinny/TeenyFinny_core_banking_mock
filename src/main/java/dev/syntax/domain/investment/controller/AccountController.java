@@ -5,6 +5,7 @@ import dev.syntax.domain.investment.entity.InvestmentAccount;
 import dev.syntax.domain.investment.service.InvestmentAccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,8 @@ public class AccountController {
                 .balance(account.getDepositAmount())
                 .build();
 
-        return ResponseEntity.ok(res);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(res);
     }
 }
