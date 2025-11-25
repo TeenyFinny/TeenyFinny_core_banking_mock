@@ -94,7 +94,7 @@ public class TransactionServiceImpl implements TransactionService {
         List<Transaction> transactions =
                 transactionRepository.findByNumberdOrderByTransactionDateDesc(number);
 
-        List<TransactionItemRes> items = (List<TransactionItemRes>) transactions.stream()
+        List<TransactionItemRes> items = transactions.stream()
                 .map(t -> new TransactionItemRes(
                         t.getId(),
                         t.getMerchantName(),
