@@ -64,7 +64,7 @@ public class Account extends BaseTimeEntity {
     @Column(nullable = false)
     private AccountType type = AccountType.DEPOSIT;
 
-    @OneToMany
+    @OneToMany(mappedBy = "account")
     private List<Transaction> transactions;
 
     private LocalDate expiredAt;
