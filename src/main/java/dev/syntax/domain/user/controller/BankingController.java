@@ -3,12 +3,8 @@ package dev.syntax.domain.user.controller;
 import dev.syntax.domain.user.dto.ChannelUserInitReq;
 import dev.syntax.domain.user.dto.UserInitRes;
 import dev.syntax.domain.user.service.InitService;
-import dev.syntax.global.response.ApiResponseUtil;
-import dev.syntax.global.response.BaseResponse;
-import dev.syntax.global.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,8 +31,7 @@ public class BankingController {
      * @return 부모인 경우 ParentUserInitRes, 자녀인 경우 ChildUserInitRes
      */
     @PostMapping("/init")
-    public ResponseEntity<BaseResponse<?>> createCoreUser(@Valid @RequestBody ChannelUserInitReq request) {
-        UserInitRes response = initService.initChannelUser(request);
-        return ApiResponseUtil.success(SuccessCode.OK, response);
+    public UserInitRes createCoreUser(@Valid @RequestBody ChannelUserInitReq request) {
+        return initService.initChannelUser(request);
     }
 }
