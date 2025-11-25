@@ -86,7 +86,7 @@ class AccountControllerTest {
                         .header("X-Core-User-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accountId").value(2))
                 .andExpect(jsonPath("$.accountNumber").value("1687-807-144644"))
                 .andExpect(jsonPath("$.accountType").value("DEPOSIT"))

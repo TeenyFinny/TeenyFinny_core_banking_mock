@@ -8,6 +8,7 @@ import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -37,6 +38,7 @@ public class AccountController {
      * @return 생성된 계좌 정보
      */
     @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
     public AccountItemRes createDepositAccount(@CurrentUserId Long userId, @Valid @RequestBody DepositAccountReq req) {
         Account account = accountService.createChildDepositAccount(userId, req);
         return AccountItemRes.from(account);

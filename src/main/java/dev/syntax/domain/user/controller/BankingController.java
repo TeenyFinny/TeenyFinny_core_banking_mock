@@ -5,10 +5,8 @@ import dev.syntax.domain.user.dto.UserInitRes;
 import dev.syntax.domain.user.service.InitService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/core/banking")
@@ -31,6 +29,7 @@ public class BankingController {
      * @return 부모인 경우 ParentUserInitRes, 자녀인 경우 ChildUserInitRes
      */
     @PostMapping("/init")
+    @ResponseStatus(HttpStatus.CREATED)
     public UserInitRes createCoreUser(@Valid @RequestBody ChannelUserInitReq request) {
         return initService.initChannelUser(request);
     }
