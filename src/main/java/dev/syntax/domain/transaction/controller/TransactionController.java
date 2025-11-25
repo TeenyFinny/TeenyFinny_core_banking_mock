@@ -1,6 +1,7 @@
 package dev.syntax.domain.transaction.controller;
 
 import dev.syntax.domain.transaction.dto.TransactionHistoryRes;
+import dev.syntax.domain.transaction.entity.Transaction;
 import dev.syntax.domain.transaction.service.TransactionService;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
@@ -39,11 +40,9 @@ public class TransactionController {
      * @return 거래 내역 및 잔액 정보 {@link TransactionHistoryRes}
      */
     @GetMapping("/account/{number}")
-    public ResponseEntity<BaseResponse<?>> getAccountTransactions(
+    public TransactionHistoryRes getAccountTransactions(
             @PathVariable String number
     ) {
-        TransactionHistoryRes response = transactionService.getHistory(number);
-
-        return ApiResponseUtil.success(SuccessCode.OK, response);
+        return transactionService.getHistory(number);
     }
 }
