@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 public class InvestmentAccount extends BaseEntity {
 
     @Id
-    @Column(name = "cano", length = 8, nullable = false)
+    @Column(name = "cano", length = 20, nullable = false)
     private String cano;
 
     @Column(name = "user_id", nullable = false)
