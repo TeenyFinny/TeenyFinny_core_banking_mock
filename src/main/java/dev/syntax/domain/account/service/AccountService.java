@@ -1,9 +1,11 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.dto.AccountStatusUpdateRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountStatus;
 import dev.syntax.domain.user.entity.CoreUser;
 
 /**
@@ -37,6 +39,7 @@ public interface AccountService {
      */
     Account createDepositAccount(CoreUser user);
 
+    AccountStatusUpdateRes updateStatus(String number, AccountStatus status);
     Account createAllowanceAccount(CoreUser user);
 
     Account createChildAllowanceAccount(Long id, DepositAccountReq req);

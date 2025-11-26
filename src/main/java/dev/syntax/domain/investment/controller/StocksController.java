@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class StocksController {
     private final KisStockApiClient kisStockApiClient;
-
+  
     @GetMapping("/core/investments/stocks")
     public MultiPriceRes getStocks() {
         return kisStockApiClient.getMultiPrice();

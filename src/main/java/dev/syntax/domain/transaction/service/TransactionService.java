@@ -1,6 +1,7 @@
 package dev.syntax.domain.transaction.service;
 
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.transaction.dto.TransactionHistoryRes;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.transaction.enums.TransactionStatus;
@@ -47,4 +48,12 @@ public interface TransactionService {
             TransactionStatus status,
             TransactionCode code
     );
+
+    /**
+     * 특정 계좌의 거래내역(입금/출금/자동이체 포함)을 최신순으로 조회합니다.
+     *
+     * @param number 계좌번호
+     * @return 잔액 + 거래내역 전체 리스트
+     */
+    TransactionHistoryRes getHistory(String number);
 }
