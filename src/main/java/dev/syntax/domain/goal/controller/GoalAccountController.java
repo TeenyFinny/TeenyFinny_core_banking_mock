@@ -1,8 +1,8 @@
 package dev.syntax.domain.goal.controller;
 
+import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.goal.dto.GoalAccountCreateReq;
-import dev.syntax.domain.goal.dto.GoalAccountItemRes;
-import dev.syntax.domain.goal.entity.GoalAccount;
 import dev.syntax.domain.goal.service.GoalAccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import jakarta.validation.Valid;
@@ -36,10 +36,11 @@ public class GoalAccountController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public GoalAccountItemRes createGoalAccount(
+    public AccountItemRes createGoalAccount(
             @CurrentUserId Long userId,
             @Valid @RequestBody GoalAccountCreateReq req
     ) {
-        return goalAccountService.createGoalAccount(userId, req);
+        Account account =  goalAccountService.createGoalAccount(userId, req);
+        return AccountItemRes.from(account);
     }
 }

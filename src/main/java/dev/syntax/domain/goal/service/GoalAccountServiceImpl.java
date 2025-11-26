@@ -1,10 +1,10 @@
 package dev.syntax.domain.goal.service;
 
+import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountType;
+import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.goal.dto.GoalAccountCreateReq;
-import dev.syntax.domain.goal.dto.GoalAccountItemRes;
-import dev.syntax.domain.goal.entity.GoalAccount;
-import dev.syntax.domain.goal.repository.GoalAccountRepository;
 import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
@@ -14,34 +14,35 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class GoalAccountServiceImpl implements GoalAccountService {
 
     private final CoreUserRepository userRepository;
-    private final GoalAccountRepository goalAccountRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     @Transactional
-    public GoalAccountItemRes createGoalAccount(Long userId, GoalAccountCreateReq req) {
+    public Account createGoalAccount(Long userId, GoalAccountCreateReq req) {
 
         // 1. 사용자 조회
         CoreUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
 
         // 2. 목표 계좌 생성
-        GoalAccount account = GoalAccount.builder()
+        Account account = Account.builder()
                 .user(user)
-                .goalName(req.name())
+                .number(AccountNumberGenerator.generate())
+                .productName(req.name())
+                .interestRate(new BigDecimal("0.001"))
                 .balance(BigDecimal.ZERO)
-                .accountNumber(AccountNumberGenerator.generate())
+                .type(AccountType.GOAL)
                 .build();
 
         // 3. 저장 후 엔티티 반환
-        goalAccountRepository.save(account);
+        accountRepository.save(account);
 
-        return GoalAccountItemRes.from(account);
+        return account;
     }
 }
