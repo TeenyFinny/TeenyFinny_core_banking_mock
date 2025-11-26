@@ -24,4 +24,6 @@ public interface CoreUserRelationshipRepository extends JpaRepository<CoreUserRe
      * @return 해당 부모의 모든 자녀 관계 목록
      */
     List<CoreUserRelationship> findAllByParent_Id(Long parentId);
+
+    boolean existsByParent_IdAndChild_Id(Long parentId, Long childId);
 }
