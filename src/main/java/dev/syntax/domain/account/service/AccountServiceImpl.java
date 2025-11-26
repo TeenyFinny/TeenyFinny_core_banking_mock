@@ -1,14 +1,17 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AccountItemRes;
+import dev.syntax.domain.account.dto.AccountStatusUpdateRes;
 import dev.syntax.domain.account.dto.ChildAccountInfoRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountStatus;
 import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.util.AccountNumberGenerator;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.global.exception.BusinessException;
 import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
@@ -100,6 +103,18 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.save(account);
     }
 
+    @Override
+    @Transactional
+    public AccountStatusUpdateRes updateStatus(String number, AccountStatus status) {
+        Account account = accountRepository.findByNumber(number)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
+
+        account.updateStatus(status);
+
+        return new AccountStatusUpdateRes(
+                account.getId(),
+                account.getStatus()
+        );
     /**
      * 가족 관계를 생성합니다.
      * <p>

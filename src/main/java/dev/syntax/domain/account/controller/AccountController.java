@@ -1,5 +1,8 @@
 package dev.syntax.domain.account.controller;
 
+import dev.syntax.domain.account.dto.AccountStatusUpdateReq;
+import dev.syntax.domain.account.dto.AccountStatusUpdateRes;
+import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.dto.UserAccountListRes;
@@ -24,7 +27,14 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    /**
+    @PatchMapping("/{number}/status")
+    public AccountStatusUpdateRes updateAccountStatus(
+            @PathVariable String number,
+            @RequestBody AccountStatusUpdateReq req
+    ) {
+        return accountService.updateStatus(number, req.status());
+    
+      /**
      * 자녀 계좌 생성 API
      * <p>
      * 자녀의 입출금 통장 계좌를 생성하고 부모-자녀 간 가족 관계를 매핑합니다.
