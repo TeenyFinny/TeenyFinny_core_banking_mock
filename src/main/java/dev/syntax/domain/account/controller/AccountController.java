@@ -33,6 +33,7 @@ public class AccountController {
             @RequestBody AccountStatusUpdateReq req
     ) {
         return accountService.updateStatus(number, req.status());
+    }
     
       /**
      * 자녀 계좌 생성 API
