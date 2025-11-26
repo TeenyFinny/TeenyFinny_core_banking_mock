@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class KisAuthFilter {
 
-    private final KisAuthTokenManager tokenManager;
+    private final KisAuthTokenManagerForDev tokenManager;
     private final KisApiConfig config;
 
     public ExchangeFilterFunction applyAuth(String trId) {
