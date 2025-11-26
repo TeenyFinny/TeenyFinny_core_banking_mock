@@ -27,7 +27,7 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    @PatchMapping("/{number}/status")
+    @PutMapping("/{number}/status")
     public AccountStatusUpdateRes updateAccountStatus(
             @PathVariable String number,
             @RequestBody AccountStatusUpdateReq req
