@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/investments/account")
-public class AccountController {
+public class InvestAccountPortfolioController {
 
     private static final String CORE_USER_ID_HEADER = "X-Core-User-Id";
     private final PortfolioService portfolioService;
