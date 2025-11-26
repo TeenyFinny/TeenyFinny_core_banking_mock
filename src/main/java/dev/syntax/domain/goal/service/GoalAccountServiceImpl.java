@@ -29,18 +29,20 @@ public class GoalAccountServiceImpl implements GoalAccountService {
 
     @Override
     @Transactional
-    public Account createGoalAccount(Long userId, GoalAccountCreateReq req) {
-        if (!relationshipRepository.existsByParent_IdAndChild_Id(userId, req.childCoreId())){
-            log.warn("[GOAL] 가족 관계 생성 누락");
+    public Account createGoalAccount(Long parentId, GoalAccountCreateReq req) {
+        // 1. 가족 관계 검증
+        if (!relationshipRepository.existsByParent_IdAndChild_Id(parentId, req.childCoreId())) {
+            log.warn("[GOAL] 가족 관계 없음: parentId={}, childId={}", parentId, req.childCoreId());
             throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
         }
-        // 1. 사용자 조회
-        CoreUser user = userRepository.findById(req.childCoreId())
+
+        // 2. 자녀 사용자 조회
+        CoreUser child = userRepository.findById(req.childCoreId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
 
-        // 2. 목표 계좌 생성
+        // 3. 계좌 생성
         Account account = Account.builder()
-                .user(user)
+                .user(child)
                 .number(AccountNumberGenerator.generate())
                 .productName(req.name())
                 .interestRate(new BigDecimal("0.001"))
@@ -48,9 +50,7 @@ public class GoalAccountServiceImpl implements GoalAccountService {
                 .type(AccountType.GOAL)
                 .build();
 
-        // 3. 저장 후 엔티티 반환
-        accountRepository.save(account);
-
-        return account;
+        // 4. 저장 후 반환
+        return accountRepository.save(account);
     }
 }
