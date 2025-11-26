@@ -1,7 +1,5 @@
 package dev.syntax.domain.investment.controller;
 
-import dev.syntax.domain.investment.dto.res.AccountPortfolioRes;
-import dev.syntax.domain.investment.dto.res.DashboardPortfolioRes;
 import dev.syntax.domain.investment.dto.res.PortfolioRes;
 import dev.syntax.domain.investment.service.PortfolioService;
 import lombok.RequiredArgsConstructor;

@@ -26,7 +26,7 @@ class InvestmentAccountServiceTest {
 
         // then
         assertThat(account).isNotNull();
-        assertThat(account.getCano()).hasSize(8);   // 8자리 계좌번호
+        assertThat(account.getCano()).hasSize(15);   // 15자리 계좌번호
         assertThat(account.getUserId()).isEqualTo(userId);
         assertThat(account.getDepositAmount()).isEqualTo(initialDeposit);
 
