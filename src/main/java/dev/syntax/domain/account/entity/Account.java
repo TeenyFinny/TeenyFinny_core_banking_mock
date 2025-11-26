@@ -2,6 +2,7 @@ package dev.syntax.domain.account.entity;
 
 import dev.syntax.domain.account.enums.AccountStatus;
 import dev.syntax.domain.account.enums.AccountType;
+import dev.syntax.domain.transaction.entity.Transaction;
 import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 계좌 엔티티
@@ -61,6 +63,9 @@ public class Account extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountType type = AccountType.DEPOSIT;
+
+    @OneToMany(mappedBy = "account")
+    private List<Transaction> transactions;
 
     private LocalDate expiredAt;
 
