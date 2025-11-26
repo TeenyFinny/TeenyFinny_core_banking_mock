@@ -74,23 +74,24 @@ public class PortfolioSnapshotService {
         summaryRepo.save(summary);
 
         // ---- 3) 종목별 스냅샷 저장 ----
-        for (HoldingItem h : calc.holdings()) {
-            monthlyRepo.save(PortfolioMonthly.builder()
-                    .cano(cano)
-                    .userId(userId)
-                    .year(year)
-                    .month(month)
-                    .productCode(h.productCode())
-                    .productName(h.productName())
-                    .holdingQuantity(h.quantity())
-                    .purchaseAvgPrice(h.avgPrice())
-                    .currentPrice(h.currentPrice())
-                    .evaluationAmount(h.evaluationAmount())
-                    .profitAmount(h.profitAmount())
-                    .profitRate(h.profitRate())
-                    .weight(h.weight())
-                    .createdAt(LocalDateTime.now())
-                    .build());
-        }
+        List<PortfolioMonthly> snapshots = calc.holdings().stream()
+                .map(h -> PortfolioMonthly.builder()
+                        .cano(cano)
+                        .userId(userId)
+                        .year(year)
+                        .month(month)
+                        .productCode(h.productCode())
+                        .productName(h.productName())
+                        .holdingQuantity(h.quantity())
+                        .purchaseAvgPrice(h.avgPrice())
+                        .currentPrice(h.currentPrice())
+                        .evaluationAmount(h.evaluationAmount())
+                        .profitAmount(h.profitAmount())
+                        .profitRate(h.profitRate())
+                        .weight(h.weight())
+                        .createdAt(LocalDateTime.now())
+                        .build())
+                .toList();
+        monthlyRepo.saveAll(snapshots);
     }
 }
