@@ -7,6 +7,7 @@ import java.util.List;
 
 @Builder
 public record PortfolioCalcResult(
+        String cano,
         Long userId,
         Long depositAmount,
         Long totalEvaluationAmount,

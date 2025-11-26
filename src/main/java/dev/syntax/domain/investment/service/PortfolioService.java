@@ -4,7 +4,7 @@ import dev.syntax.domain.investment.dto.HoldingItem;
 import dev.syntax.domain.investment.dto.StockPrice;
 import dev.syntax.domain.investment.dto.TopHoldingItem;
 import dev.syntax.domain.investment.dto.cal.PortfolioCalcResult;
-import dev.syntax.domain.investment.dto.res.AccountPortfolioRes;
+import dev.syntax.domain.investment.dto.res.InvestAccountPortfolioRes;
 import dev.syntax.domain.investment.dto.res.DashboardPortfolioRes;
 import dev.syntax.domain.investment.dto.res.PortfolioRes;
 import dev.syntax.domain.investment.entity.InvestmentAccount;
@@ -191,11 +191,12 @@ public class PortfolioService {
      *  2. 계좌 조회 API
      * 보유 종목 전체 + 평가 정보 (상위3 불필요)
      */
-    public AccountPortfolioRes getAccountPortfolio(String cano, Long userId) {
+    public InvestAccountPortfolioRes getAccountPortfolio(String cano, Long userId) {
 
         PortfolioCalcResult calc = calculatePortfolio(cano, userId);
 
-        return new AccountPortfolioRes(
+        return new InvestAccountPortfolioRes(
+                cano,
                 calc.userId(),
                 calc.depositAmount(),
                 calc.totalEvaluationAmount(),
