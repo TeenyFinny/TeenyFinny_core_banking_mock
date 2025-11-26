@@ -115,6 +115,8 @@ public class AccountServiceImpl implements AccountService {
                 account.getId(),
                 account.getStatus()
         );
+    }
+
     /**
      * 가족 관계를 생성합니다.
      * <p>
