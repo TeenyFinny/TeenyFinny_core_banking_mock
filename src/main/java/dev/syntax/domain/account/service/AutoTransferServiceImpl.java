@@ -232,5 +232,50 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         autoTransferRepository.save(transfer);
     }
 
+    /**
+     * 자동이체 삭제 기능 구현.
+     *
+     * <p>
+     * 사용자가 등록한 자동이체를 실제로 삭제(Hard Delete)하며,
+     * 다음 조건을 만족해야 삭제가 가능합니다.
+     * </p>
+     *
+     * <ol>
+     *     <li>사용자 ID(userId)에 해당하는 CoreUser가 존재해야 함</li>
+     *     <li>autoTransferId에 해당하는 자동이체가 존재해야 함</li>
+     *     <li>자동이체 소유자가 요청 사용자와 동일해야 함</li>
+     * </ol>
+     *
+     * <p>
+     * 해당 메서드는 Soft Delete가 아닌,
+     * {@code autoTransferRepository.delete(autoTransfer)} 를 호출하여
+     * DB에서 자동이체 엔티티를 완전히 제거합니다.
+     * </p>
+     *
+     * @param userId         삭제 요청을 보낸 사용자 ID
+     * @param autoTransferId 삭제할 자동이체 엔티티의 ID
+     *
+     * @throws BusinessException
+     *         <ul>
+     *             <li>{@code USER_NOT_FOUND} - 사용자 조회 실패</li>
+     *             <li>{@code AUTO_TRANSFER_NOT_FOUND} - 자동이체 조회 실패</li>
+     *             <li>{@code AUTO_TRANSFER_FORBIDDEN} - 사용자가 소유하지 않은 자동이체에 접근한 경우</li>
+     *         </ul>
+     */
+    @Override
+    @Transactional
+    public void deleteAutoTransfer(Long userId, Long autoTransferId) {
+
+        CoreUser user = coreUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+
+        AutoTransfer autoTransfer = autoTransferRepository.findById(autoTransferId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+
+        autoTransferRepository.delete(autoTransfer);
+        autoTransferRepository.deleteById(autoTransferId);
+
+
+    }
     
 }

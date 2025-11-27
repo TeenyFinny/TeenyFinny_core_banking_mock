@@ -81,4 +81,41 @@ public interface AutoTransferService {
      * @throws BusinessException 자동이체, 계좌, 또는 사용자를 찾을 수 없는 경우
      */
     void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId);
+
+        /**
+     * 자동이체를 삭제합니다.
+     *
+     * <p>
+     * 사용자가 등록한 자동이체(AutoTransfer)를 완전히 삭제(Hard Delete)하는 기능입니다.
+     * 다음 조건을 모두 만족하는 경우에만 삭제가 가능합니다.
+     * </p>
+     *
+     * <ul>
+     *     <li>1) 요청한 사용자(userId)가 존재해야 합니다.</li>
+     *     <li>2) autoTransferId에 해당하는 자동이체가 존재해야 합니다.</li>
+     *     <li>3) 자동이체의 소유자(ID)가 요청한 사용자와 일치해야 합니다.</li>
+     * </ul>
+     *
+     * <p>
+     * 삭제 방식은 Soft Delete(상태 변경)가 아닌
+     * JPA Repository의 {@code delete()} 메서드를 사용한 실제 삭제(Hard Delete)를 수행합니다.
+     * 자동이체 기록을 보존할 필요가 없는 비즈니스 요구에 적합합니다.
+     * </p>
+     *
+     * @param userId           자동이체 삭제 요청을 보낸 사용자 ID
+     * @param autoTransferId   삭제할 자동이체의 고유 ID
+     *
+     * @throws BusinessException
+     *         <ul>
+     *             <li>{@code USER_NOT_FOUND} - 사용자 조회 실패</li>
+     *             <li>{@code AUTO_TRANSFER_NOT_FOUND} - 자동이체 조회 실패</li>
+     *             <li>{@code AUTO_TRANSFER_FORBIDDEN} - 사용자가 소유하지 않은 자동이체에 접근한 경우</li>
+     *         </ul>
+     *
+     * @author
+     *      TeenyFinny Core Banking Team
+     * @see AutoTransfer
+     * @see dev.syntax.domain.account.repository.AutoTransferRepository
+     */
+    void deleteAutoTransfer(Long userId, Long autoTransferId);
 }
