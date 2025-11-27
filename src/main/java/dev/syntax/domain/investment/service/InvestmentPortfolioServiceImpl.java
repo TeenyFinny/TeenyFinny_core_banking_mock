@@ -4,6 +4,7 @@ import dev.syntax.domain.investment.dto.HoldingItem;
 import dev.syntax.domain.investment.dto.StockPrice;
 import dev.syntax.domain.investment.dto.TopHoldingItem;
 import dev.syntax.domain.investment.dto.cal.PortfolioCalcResult;
+import dev.syntax.domain.investment.dto.res.HoldingItemRes;
 import dev.syntax.domain.investment.dto.res.InvestAccountPortfolioRes;
 import dev.syntax.domain.investment.dto.res.DashboardPortfolioRes;
 import dev.syntax.domain.investment.dto.res.PortfolioRes;
@@ -13,6 +14,7 @@ import dev.syntax.domain.investment.repository.InvestmentAccountRepository;
 import dev.syntax.domain.investment.repository.PortfolioRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
+import dev.syntax.global.service.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class PortfolioService {
+public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioService{
 
     private final PortfolioRepository portfolioRepository;
     private final InvestmentAccountRepository accountRepository;
@@ -173,16 +175,17 @@ public class PortfolioService {
     public PortfolioRes getPortfolio(String cano, Long userId) {
 
         PortfolioCalcResult calc = calculatePortfolio(cano, userId);
+        List<HoldingItemRes> holdings = convertToRes(calc.holdings());
 
         List<TopHoldingItem> topHoldings = buildTopHoldings(calc.holdings());
 
         return new PortfolioRes(
                 calc.userId(),
-                calc.depositAmount(),
-                calc.totalEvaluationAmount(),
-                calc.totalProfitAmount(),
-                calc.totalProfitRate(),
-                calc.holdings(),
+                Utils.NumberFormattingService(calc.depositAmount()),
+                Utils.NumberFormattingService(calc.totalEvaluationAmount()),
+                Utils.NumberFormattingService(calc.totalProfitAmount()),
+                Utils.FormatToTwoDecimal(calc.totalProfitRate()),
+                holdings,
                 topHoldings
         );
     }
@@ -198,10 +201,10 @@ public class PortfolioService {
         return new InvestAccountPortfolioRes(
                 cano,
                 calc.userId(),
-                calc.depositAmount(),
-                calc.totalEvaluationAmount(),
-                calc.totalProfitAmount(),
-                calc.totalProfitRate(),
+                Utils.NumberFormattingService(calc.depositAmount()),
+                Utils.NumberFormattingService(calc.totalEvaluationAmount()),
+                Utils.NumberFormattingService(calc.totalProfitAmount()),
+                Utils.FormatToTwoDecimal(calc.totalProfitRate()),
                 calc.holdings()
         );
     }
@@ -218,14 +221,15 @@ public class PortfolioService {
                 .sorted((a, b) -> Double.compare(b.weight(), a.weight()))
                 .limit(3)
                 .toList();
+        List<HoldingItemRes> resTop3 = convertToRes(top3);
 
         return new DashboardPortfolioRes(
                 calc.userId(),
-                calc.depositAmount(),
-                calc.totalEvaluationAmount(),
-                calc.totalProfitAmount(),
-                calc.totalProfitRate(),
-                top3
+                Utils.NumberFormattingService(calc.depositAmount()),
+                Utils.NumberFormattingService(calc.totalEvaluationAmount()),
+                Utils.NumberFormattingService(calc.totalProfitAmount()),
+                Utils.FormatToTwoDecimal(calc.totalProfitRate()),
+                resTop3
         );
     }
 
@@ -262,5 +266,25 @@ public class PortfolioService {
         }
 
         return result;
+    }
+
+    /**
+     * 금액 숫자 -> String으로 변환하여 res dto로 변환
+     */
+    private List<HoldingItemRes> convertToRes(List<HoldingItem> items) {
+        return items.stream()
+                .map(h -> HoldingItemRes.builder()
+                        .productCode(h.productCode())
+                        .productName(h.productName())
+                        .quantity(Utils.NumberFormattingService(h.quantity()))
+                        .avgPrice(Utils.NumberFormattingService(h.avgPrice()))
+                        .currentPrice(Utils.NumberFormattingService(h.currentPrice()))
+                        .evaluationAmount(Utils.NumberFormattingService(h.evaluationAmount()))
+                        .profitAmount(Utils.NumberFormattingService(h.profitAmount()))
+                        .profitRate(Utils.FormatToTwoDecimal(h.profitRate()))
+                        .weight(Utils.RoundToTwoDecimal(h.weight()))
+                        .build()
+                )
+                .toList();
     }
 }

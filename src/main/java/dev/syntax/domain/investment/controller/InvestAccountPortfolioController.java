@@ -1,7 +1,7 @@
 package dev.syntax.domain.investment.controller;
 
 import dev.syntax.domain.investment.dto.res.InvestAccountPortfolioRes;
-import dev.syntax.domain.investment.service.PortfolioService;
+import dev.syntax.domain.investment.service.InvestmentPortfolioService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/core/investments/account")
 public class InvestAccountPortfolioController {
 
-    private final PortfolioService portfolioService;
+    private final InvestmentPortfolioService portfolioService;
 
     /** 내 계좌 전체 정보 */
     @GetMapping("/{cano}")
