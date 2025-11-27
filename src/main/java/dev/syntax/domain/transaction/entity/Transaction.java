@@ -1,7 +1,9 @@
 package dev.syntax.domain.transaction.entity;
 
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionStatus;
+import dev.syntax.domain.transaction.enums.TransactionType;
 import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -47,10 +49,10 @@ public class Transaction extends BaseTimeEntity {
     @Column(name = "code", length = 10, nullable = false)
     private String code;
 
-    @Column(name = "type", length = 20, nullable = true)
-    private String type;
+    @Column(name = "type")
+    private TransactionType type;
 
-    @Column(name = "amount", nullable = false)
+    @Column(name = "amount", nullable = false, precision = 15, scale = 3)
     private BigDecimal amount;
 
     @Column(name = "balance_after", nullable = false, precision = 15, scale = 3)
@@ -59,8 +61,8 @@ public class Transaction extends BaseTimeEntity {
     @Column(name = "merchant_name", length = 50, nullable = false)
     private String merchantName;
 
-    @Column(name = "category", length = 30, nullable = false)
-    private String category;
+    @Column(name = "category", nullable = false)
+    private TransactionCategory category;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

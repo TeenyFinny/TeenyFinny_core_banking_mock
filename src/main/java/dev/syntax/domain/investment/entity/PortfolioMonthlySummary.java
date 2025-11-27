@@ -20,28 +20,28 @@ public class PortfolioMonthlySummary {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "cano")
+    @Column(name = "cano", nullable = false)
     private String cano;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "year")
+    @Column(name = "year", nullable = false)
     private int year;
 
-    @Column(name = "month")
+    @Column(name = "month", nullable = false)
     private int month;
 
-    @Column(name = "deposit_amount")
+    @Column(name = "deposit_amount", nullable = false)
     private Long depositAmount;
 
-    @Column(name = "total_evaluation_amount")
+    @Column(name = "total_evaluation_amount", nullable = false)
     private Long totalEvaluationAmount;
 
-    @Column(name = "total_profit_amount")
+    @Column(name = "total_profit_amount", nullable = false)
     private Long totalProfitAmount;
 
-    @Column(name = "total_profit_rate")
+    @Column(name = "total_profit_rate", nullable = false)
     private Double totalProfitRate;
 
     @Column(name = "top1_name")

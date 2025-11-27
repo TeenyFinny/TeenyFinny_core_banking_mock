@@ -30,8 +30,6 @@ public class InvestmentAccount extends BaseEntity {
     @Column(name = "dnca_tot_amt", nullable = false)
     private Long depositAmount;
 
-
-
     /**
      * 예수금을 증가합니다. (매도 금액 만큼 depositAmount(dnca_tot_amt) 증가)
      *
