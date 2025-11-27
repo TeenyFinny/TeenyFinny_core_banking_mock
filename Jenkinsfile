@@ -131,191 +131,301 @@ pipeline {
                 anyOf{
                     branch 'main'
                     branch 'feat/CI-CD'
-                    branch 'test/jenkins'
                 }
             }
             steps {
                 echo 'main branch : 배포가 시작되었습니다.'
                 echo 'main branch : 해당 단계에서 실패 시 CI/CD 담당자에게 문의해주세요.'
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-hub',
-                    usernameVariable: 'REG_USER',
-                    passwordVariable: 'REG_PASS'
-                )]){
-                    sh(label: 'Docker build & push (latest)', script: '''
 
-                    ''')
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker-hub',
+                        usernameVariable: 'REG_USER',
+                        passwordVariable: 'REG_PASS'
+                    ),
+                    // 2) Bastion 서버 접속용 SSH 키
+                    sshUserPrivateKey(
+                        credentialsId: 'aws-bastion-key',   // Jenkins에 미리 만들어 둔 ID
+                        keyFileVariable: 'BASTION_KEY',     // 쉘에서 쓸 파일 경로 변수명
+                        usernameVariable: 'BASTION_USER'    // 쉘에서 쓸 유저명 변수명
+                    ),
+                ]) {
+                    sh """
+                       ssh -o StrictHostKeyChecking=no \
+                           -i "$BASTION_KEY" \
+                           "$BASTION_USER"@ec2-15-165-208-216.ap-northeast-2.compute.amazonaws.com << 'EOSSH'
+
+echo "[bastion] \$(hostname)"
+
+# 첫 번째 운영 서버
+ssh -o StrictHostKeyChecking=no \\
+   -i ~/.ssh/sw-team-3-bastion-rsa.pem \\
+   ubuntu@172.31.69.35 << 'EOSSH_PRIV1'
+
+echo "[private-1] \$(hostname)"
+sudo docker ps
+
+# Jenkins credentials/env를 Groovy가 먼저 치환
+echo '${env.REG_PASS}' | sudo docker login -u '${env.REG_USER}' --password-stdin
+sudo docker pull '${env.MAIN_IMAGE_NAME}':latest
+
+# 0) 헬스체크 - 서버가 살아있는지 확인
+echo "[health-check] Checking server health..."
+health_status=\$(curl -s --connect-timeout 2 --max-time 3 "http://127.0.0.1:8080/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
+
+if [ "\$health_status" = "UP" ]; then
+    echo "[health-check] Server is healthy. Proceeding with graceful shutdown..."
+
+    # 1) readiness OFF 요청 보내고 응답 출력
+    echo "[readiness/off] request"
+    curl -XPOST "http://127.0.0.1:8080/internal/readiness/off" || echo "[readiness/off] curl failed: \$?"
+    echo ""  # 줄바꿈
+
+    # 2) drain 루프 - 매번 응답 JSON 출력
+    echo "[drain] start polling..."
+    while true; do
+        resp="\$(curl -s "http://127.0.0.1:8080/actuator/drain")"
+        echo "[drain] response: \${resp}"
+
+        echo "\${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
+            echo "[drain] drained == true, continue pipeline."
+            break
+        }
+
+        echo "[drain] Waiting to drain..."
+        sleep 1
+    done
+fi
+
+# 4) 새 컨테이너 실행 (백그라운드)
+# 4) 기존 컨테이너 종료 & 삭제 (완료될 때까지 대기)
+if sudo docker ps -a --format '{{.Names}}' | grep -q "^${env.MAIN_APP_NAME}\$"; then
+  echo "[docker] Stopping existing container: ${env.MAIN_APP_NAME}"
+  sudo docker stop ${env.MAIN_APP_NAME}
+
+  # 완전히 내려갈 때까지 대기 (실행 중 컨테이너 목록에서 사라질 때까지)
+  while sudo docker ps --format '{{.Names}}' | grep -q "^${env.MAIN_APP_NAME}\$"; do
+    echo "[docker] Waiting for container to stop..."
+    sleep 1
+  done
+
+  echo "[docker] Removing existing container: ${env.MAIN_APP_NAME}"
+  sudo docker rm -f ${env.MAIN_APP_NAME}
+
+  # 완전히 삭제될 때까지 대기 (모든 컨테이너 목록에서 사라질 때까지)
+  while sudo docker ps -a --format '{{.Names}}' | grep -q "^${env.MAIN_APP_NAME}\$"; do
+    echo "[docker] Waiting for container to be removed..."
+    sleep 1
+  done
+else
+  echo "[docker] No existing container named ${env.MAIN_APP_NAME}"
+fi
+
+
+sudo docker run -d \
+  --name core-server \
+  -p 8080:8080 \
+  -e TZ=Asia/Seoul \
+  --restart unless-stopped \
+  -e SPRING_PROFILES_ACTIVE=secret \
+  -v /home/ubuntu/app-config/application-secret.yml:/config/application-secret.yml \
+  teenyfinny/core:latest
+
+# 5) 상태 확인
+# 5) 배포 후 health check (actuator/health = UP 될 때까지 대기)
+echo "[post-deploy] Waiting for actuator health = UP..."
+
+max_retries=60   # 최대 60번 (2분 정도)
+retry=0
+health_status="UNKNOWN"
+
+while [ "\$retry" -lt "\$max_retries" ]; do
+  health_status=\$(curl -s --connect-timeout 2 --max-time 3 \
+    "http://127.0.0.1:8080/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
+
+  if [ "\$health_status" = "UP" ]; then
+    echo "[post-deploy] Server is UP (actuator/health)."
+    break
+  fi
+
+  echo "[post-deploy] Current status=\${health_status:-UNKNOWN}, retry=\$((retry+1))/\$max_retries"
+  retry=\$((retry+1))
+  sleep 2
+done
+
+if [ "\$health_status" != "UP" ]; then
+  echo "[post-deploy] Server did NOT become healthy within timeout."
+  exit 1   # 여기서 ssh 종료 → Jenkins stage 실패
+fi
+
+EOSSH_PRIV1
+
+# 두 번째 운영 서버
+ssh -o StrictHostKeyChecking=no \\
+   -i ~/.ssh/sw-team-3-bastion-rsa.pem \\
+   ubuntu@172.31.46.44 << 'EOSSH_PRIV2'
+
+echo "[private-2] \$(hostname)"
+sudo docker ps
+
+# Jenkins credentials/env를 Groovy가 먼저 치환
+echo '${env.REG_PASS}' | sudo docker login -u '${env.REG_USER}' --password-stdin
+sudo docker pull '${env.MAIN_IMAGE_NAME}':latest
+
+# 0) 헬스체크 - 서버가 살아있는지 확인
+echo "[health-check] Checking server health..."
+health_status=\$(curl -s --connect-timeout 2 --max-time 3 "http://127.0.0.1:8080/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
+
+if [ "\$health_status" = "UP" ]; then
+    echo "[health-check] Server is healthy. Proceeding with graceful shutdown..."
+
+    # 1) readiness OFF 요청 보내고 응답 출력
+    echo "[readiness/off] request"
+    curl -XPOST "http://127.0.0.1:8080/internal/readiness/off" || echo "[readiness/off] curl failed: \$?"
+    echo ""  # 줄바꿈
+
+    # 2) drain 루프 - 매번 응답 JSON 출력
+    echo "[drain] start polling..."
+    while true; do
+        resp="\$(curl -s "http://127.0.0.1:8080/actuator/drain")"
+        echo "[drain] response: \${resp}"
+
+        echo "\${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
+            echo "[drain] drained == true, continue pipeline."
+            break
+        }
+
+        echo "[drain] Waiting to drain..."
+        sleep 1
+    done
+fi
+
+# 4) 새 컨테이너 실행 (백그라운드)
+# 4) 기존 컨테이너 종료 & 삭제 (완료될 때까지 대기)
+if sudo docker ps -a --format '{{.Names}}' | grep -q "^${env.MAIN_APP_NAME}\$"; then
+  echo "[docker] Stopping existing container: ${env.MAIN_APP_NAME}"
+  sudo docker stop ${env.MAIN_APP_NAME}
+
+  # 완전히 내려갈 때까지 대기 (실행 중 컨테이너 목록에서 사라질 때까지)
+  while sudo docker ps --format '{{.Names}}' | grep -q "^${env.MAIN_APP_NAME}\$"; do
+    echo "[docker] Waiting for container to stop..."
+    sleep 1
+  done
+
+  echo "[docker] Removing existing container: ${env.MAIN_APP_NAME}"
+  sudo docker rm -f ${env.MAIN_APP_NAME}
+
+  # 완전히 삭제될 때까지 대기 (모든 컨테이너 목록에서 사라질 때까지)
+  while sudo docker ps -a --format '{{.Names}}' | grep -q "^${env.MAIN_APP_NAME}\$"; do
+    echo "[docker] Waiting for container to be removed..."
+    sleep 1
+  done
+else
+  echo "[docker] No existing container named ${env.MAIN_APP_NAME}"
+fi
+
+
+sudo docker run -d \
+  --name core-server \
+  -p 8080:8080 \
+  -e TZ=Asia/Seoul \
+  --restart unless-stopped \
+  -e SPRING_PROFILES_ACTIVE=secret \
+  -v /home/ubuntu/app-config/application-secret.yml:/config/application-secret.yml \
+  teenyfinny/core:latest
+
+# 5) 상태 확인
+# 5) 배포 후 health check (actuator/health = UP 될 때까지 대기)
+echo "[post-deploy] Waiting for actuator health = UP..."
+
+max_retries=60   # 최대 60번 (2분 정도)
+retry=0
+health_status="UNKNOWN"
+
+while [ "\$retry" -lt "\$max_retries" ]; do
+  health_status=\$(curl -s --connect-timeout 2 --max-time 3 \
+    "http://127.0.0.1:8080/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
+
+  if [ "\$health_status" = "UP" ]; then
+    echo "[post-deploy] Server is UP (actuator/health)."
+    break
+  fi
+
+  echo "[post-deploy] Current status=\${health_status:-UNKNOWN}, retry=\$((retry+1))/\$max_retries"
+  retry=\$((retry+1))
+  sleep 2
+done
+
+if [ "\$health_status" != "UP" ]; then
+  echo "[post-deploy] Server did NOT become healthy within timeout."
+  exit 1   # 여기서 ssh 종료 → Jenkins stage 실패
+fi
+
+EOSSH_PRIV2
+
+EOSSH
+                    """
+
                 }
+
                 echo 'main branch : 배포가 완료되었습니다.'
             }
         }
 
-        stage('CD : dev 브랜치 이미지를 운영서버에서 배포') {
+        stage('CD : dev 브랜치 이미지를 온프레미스에서 배포') {
             when {
                 anyOf{
                     branch 'dev'
                     branch 'feat/CI-CD'
-                    branch 'test/jenkins'
                 }
             }
             steps {
                 echo 'dev branch : 배포가 시작되었습니다.'
                 echo 'dev branch : 해당 단계에서 실패 시 CI/CD 담당자에게 문의해주세요.'
 
+                sh('''
+# 0) 헬스체크 - 서버가 살아있는지 확인
+echo "[health-check] Checking server health..."
+health_status=$(curl -s --connect-timeout 2 --max-time 3 "http://192.168.0.79:8261/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
+
+if [ "$health_status" = "UP" ]; then
+    echo "[health-check] Server is healthy. Proceeding with graceful shutdown..."
+
+    # 1) readiness OFF 요청 보내고 응답 출력
+    echo "[readiness/off] request"
+    curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
+    echo ""  # 줄바꿈
+
+    # 2) drain 루프 - 매번 응답 JSON 출력
+    echo "[drain] start polling..."
+    while true; do
+        resp="$(curl -s "http://192.168.0.79:8261/actuator/drain")"
+        echo "[drain] response: ${resp}"
+
+        echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
+            echo "[drain] drained == true, continue pipeline."
+            break
+        }
+
+        echo "[drain] Waiting to drain..."
+        sleep 1
+    done
+fi
+
+# 4) 새 컨테이너 실행 (백그라운드)
+docker rm -f ${TEST_APP_NAME} || true
+
+cd /home/sw_team_3/backend
+
+docker compose -p sw_team_3 up -d app-local-1
+
+# 5) 상태 확인
+docker ps --filter "name=${TEST_APP_NAME}"
+docker logs --tail=50 "${TEST_APP_NAME}" || true
+                        ''')
+
                 echo 'dev branch : 배포가 완료되었습니다.'
             }
         }
-
-
-//         stage('CD : push to docker hub') {
-//             steps {     // 빌드한 jar 파일을 도커 이미지로 만든 뒤 도커허브에 푸시합니다.
-//                 withCredentials([usernamePassword(
-//                     credentialsId: 'docker-hub',
-//                     usernameVariable: 'REG_USER',
-//                     passwordVariable: 'REG_PASS'
-//                 )]){
-//                     sh '''
-//                         echo $REG_PASS | docker login -u $REG_USER --password-stdin
-//                     '''
-//                     script {
-//                         def branch = env.GIT_BRANCH     // SCM 사용 시 제공되는 브랜치명을 조건문의 분기로 사용
-//
-//                         // test/jenkins 부분의 경우 파이프라인이 완성되었다고 판단되면 삭제할 예정입니다.
-//                         // 동작 자체는 dev 브랜치의 경우와 동일합니다.
-//                         if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
-//                             sh(label: 'Docker build & push (latest)', script: '''
-//                             set -euxo pipefail
-//                             docker build -t ${DEV_IMAGE_NAME}:latest .
-//                             docker push  ${DEV_IMAGE_NAME}:latest
-//                         ''')
-//                         }
-//
-//                         // DEV_IMAGE_NAME 이름으로 이미지를 빌드한 뒤 도커 허브에 푸시합니다.
-//                         if (branch == 'dev' || branch == 'origin/dev') {
-//                             sh(label: 'Docker build & push (latest)', script: '''
-//                             set -euxo pipefail
-//                             docker build -t ${DEV_IMAGE_NAME}:latest .
-//                             docker push  ${DEV_IMAGE_NAME}:latest
-//                         ''')
-//                         }
-//
-//                         // MAIN_IMAGE_NAME 이름으로 이미지를 빌드한 뒤 도커 허브에 푸시합니다.
-//                         if (branch == 'main' || branch == 'origin/main') {
-//                             sh(label: 'Docker build & push (latest)', script: '''
-//                             set -euxo pipefail
-//                             docker build -t ${MAIN_IMAGE_NAME}:latest .
-//                             docker push  ${MAIN_IMAGE_NAME}:latest
-//                         ''')
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//
-//         stage('deploy') {
-//             steps{
-//                 script {
-//                     def branch = env.GIT_BRANCH
-//
-//                     // test/jenkins 부분의 경우 파이프라인이 완성되었다고 판단되면 삭제할 예정입니다.
-//                     // 동작 자체는 dev 브랜치의 경우와 동일합니다.
-//                     if (branch == 'test/jenkins' || branch == 'origin/test/jenkins') {
-//                         sh('''
-//
-// # 0) 헬스체크 - 서버가 살아있는지 확인
-// echo "[health-check] Checking server health..."
-// health_status=$(curl -s --connect-timeout 2 --max-time 3 "http://192.168.0.79:8261/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
-//
-// if [ "$health_status" = "UP" ]; then
-//     echo "[health-check] Server is healthy. Proceeding with graceful shutdown..."
-//
-//     # 1) readiness OFF 요청 보내고 응답 출력
-//     echo "[readiness/off] request"
-//     curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
-//     echo ""  # 줄바꿈
-//
-//     # 2) drain 루프 - 매번 응답 JSON 출력
-//     echo "[drain] start polling..."
-//     while true; do
-//         resp="$(curl -s "http://192.168.0.79:8261/actuator/drain")"
-//         echo "[drain] response: ${resp}"
-//
-//         echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
-//             echo "[drain] drained == true, continue pipeline."
-//             break
-//         }
-//
-//         echo "[drain] Waiting to drain..."
-//         sleep 1
-//     done
-// fi
-//
-// # 4) 새 컨테이너 실행 (백그라운드)
-// docker rm -f ${TEST_APP_NAME} || true
-//
-// cd /home/sw_team_3/backend
-//
-// docker compose -p sw_team_3 up -d app-local-2
-//
-// # 5) 상태 확인
-// docker ps --filter "name=${TEST_APP_NAME}"
-// docker logs --tail=50 "${TEST_APP_NAME}" || true
-//                         ''')
-//                     }
-//
-//                     // dev 브랜치 : 온 프레미스에서 docker-compose로 작동하고 있는 컨테이너를 업데이트합니다.
-//                     // 헬스체크 후 응답이 있을 시 더 이상의 요청이 들어오는 것을 차단한 후 모든 요청이 완료되었을 시 compose up 합니다.
-//                     if (branch == 'dev' || branch == 'origin/dev') {
-//                         sh('''
-//
-// # 0) 헬스체크 - 서버가 살아있는지 확인
-// echo "[health-check] Checking server health..."
-// health_status=$(curl -s --connect-timeout 2 --max-time 3 "http://192.168.0.79:8261/actuator/health" 2>/dev/null | jq -r '.status' 2>/dev/null)
-//
-// if [ "$health_status" = "UP" ]; then
-//     echo "[health-check] Server is healthy. Proceeding with graceful shutdown..."
-//
-//     # 1) readiness OFF 요청 보내고 응답 출력
-//     echo "[readiness/off] request"
-//     curl -XPOST "http://192.168.0.79:8261/internal/readiness/off" || echo "[readiness/off] curl failed: $?"
-//     echo ""  # 줄바꿈
-//
-//     # 2) drain 루프 - 매번 응답 JSON 출력
-//     echo "[drain] start polling..."
-//     while true; do
-//         resp="$(curl -s "http://192.168.0.79:8261/actuator/drain")"
-//         echo "[drain] response: ${resp}"
-//
-//         echo "${resp}" | jq -e '.drained == true' >/dev/null 2>&1 && {
-//             echo "[drain] drained == true, continue pipeline."
-//             break
-//         }
-//
-//         echo "[drain] Waiting to drain..."
-//         sleep 1
-//     done
-// fi
-//
-// # 4) 새 컨테이너 실행 (백그라운드)
-// docker rm -f ${TEST_APP_NAME} || true
-//
-// cd /home/sw_team_3/backend
-//
-// docker compose -p sw_team_3 up -d app-local-2
-//
-// # 5) 상태 확인
-// docker ps --filter "name=${TEST_APP_NAME}"
-// docker logs --tail=50 "${TEST_APP_NAME}" || true
-//                         ''')
-//                     }
-//
-//                     if (branch == 'main' || branch == 'origin/main') {
-//                         sh('''
-//                             echo "TODO : AWS 분산환경 세팅 후 SSH로 AWS 접근 후 도커 허브의 이미지 요청 유실 없이 PULL, RUN 하기!"
-//                         ''')
-//                     }
-//                 }
-//             }
-//         }
     } // end of stages
 } // end of pipeline
