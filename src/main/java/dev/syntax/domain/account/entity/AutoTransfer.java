@@ -80,4 +80,8 @@ public class AutoTransfer extends BaseTimeEntity {
         this.nextTransferDay = newTransfer.getNextTransferDay();
         this.status = AutoTransferStatus.PROCESSING;
     }
+
+    public void updateTransferDay(Integer payDay) {
+        this.transferDay = payDay;
+    }
 }

@@ -2,6 +2,7 @@ package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
+import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.enums.AutoTransferStatus;
@@ -233,6 +234,20 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         autoTransferRepository.save(transfer);
     }
 
+    @Override
+    @Transactional
+    public UpdateAutoTransferDayRes updateAutoTransferDay(Long userId, Long autoTransferId, Integer payDay) {
+        CoreUser user = coreUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+
+        AutoTransfer autoTransfer = autoTransferRepository.findById(autoTransferId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+
+        autoTransfer.updateTransferDay(payDay);
+
+        return new UpdateAutoTransferDayRes(autoTransferId, autoTransfer.getTransferDay());
+    }
+
     /**
      * 자동이체 삭제 기능 구현.
      *
@@ -274,9 +289,6 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
         autoTransferRepository.delete(autoTransfer);
-        autoTransferRepository.deleteById(autoTransferId);
-
-
     }
     
 }

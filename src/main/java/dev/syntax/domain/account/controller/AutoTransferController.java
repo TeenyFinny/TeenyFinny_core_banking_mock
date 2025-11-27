@@ -38,9 +38,7 @@ public class AutoTransferController {
      *
      * @param userId         인증된 사용자 ID (현재 로그인 사용자)
      * @param autoTransferId 삭제할 자동이체의 고유 ID
-     *
-     * @throws dev.syntax.global.exception.BusinessException
-     *      권한 없음, 사용자 없음, 자동이체 없음 등의 비즈니스 예외
+     * @throws dev.syntax.global.exception.BusinessException 권한 없음, 사용자 없음, 자동이체 없음 등의 비즈니스 예외
      */
     @DeleteMapping("/{autoTransferId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -51,4 +49,13 @@ public class AutoTransferController {
         autoTransferService.deleteAutoTransfer(userId, autoTransferId);
     }
 
+    @PutMapping("/{autoTransferId}/pay-day")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateAutoTransferDay(
+            @CurrentUserId Long userId,
+            @PathVariable Long autoTransferId,
+            @RequestBody Integer payDay
+    ) {
+        autoTransferService.updateAutoTransferDay(userId, autoTransferId, payDay);
+    }
 }
