@@ -194,15 +194,16 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
         // 3) 자동이체 소유권 검증 (IDOR 방지)
         // 조회한 자동이체가 요청 대상 유저(req.userId())의 것이 맞는지 확인
-        if (!transfer.getUser().getId().equals(userId)) {
-            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        // 4) 자동이체 소유자 조회 및 검증
+        CoreUser user = transfer.getUser();
+        
+        // 로그인한 유저(userId)가 자동이체 소유자(user.getId())와 다르다면, 부모-자녀 관계여야 함
+        if (!userId.equals(user.getId())) {
+             boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, user.getId());
+             if (!isParent) {
+                 throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+             }
         }
-
-        // 4) 자녀 아이디로 사용자 조회
-        CoreUser user = coreUserRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
-
-
         // 7) AutoTransfer 엔티티 업데이트
         transfer.updateTransfer(req.amount(), req.transferDay(), AutoTransferDateCalculator.getNextTransferDate(req.transferDay()));
 
