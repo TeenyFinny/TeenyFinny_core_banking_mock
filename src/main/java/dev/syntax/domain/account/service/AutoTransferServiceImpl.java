@@ -169,47 +169,56 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         return autoTransferRepository.findByNextTransferDay(date);
     }
 
-    /**
-     * 자동이체 정보를 수정합니다.
-     * <p>
-     * 1. 권한 검증: 본인 또는 부모만 수정 가능
-     * 2. 자동이체 ID로 기존 자동이체 조회
-     * 3. 소유권 검증: 수정하려는 자동이체가 대상 유저의 것인지 확인 (IDOR 방지)
-     * 4. 사용자 및 출금/입금 계좌 검증
-     * 5. 새로운 정보로 AutoTransfer 엔티티 생성
-     * 6. 기존 엔티티에 새 정보 업데이트
-     * 7. 변경사항 저장
-     * </p>
-     * <p>
-     * 이체일이 변경되면 다음 실행일도 자동으로 재계산됩니다.
-     * </p>
-     */
-    @Transactional
-    @Override
-    public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, Long autoTransferId) {
+/**
+ * 자동이체 정보를 수정합니다.
+ *
+ * <p>권한 및 유효성 검증 흐름:</p>
+ * <ol>
+ *   <li>자동이체 ID로 기존 자동이체 조회</li>
+ *   <li>권한 검증: 자동이체 소유자이거나 부모-자녀 관계여야 수정 가능</li>
+ *   <li>자동이체 정보 업데이트</li>
+ *   <li>저장 후 영속성 컨텍스트 반영</li>
+ * </ol>
+ *
+ * <p>
+ * ※ 이체일 변경 시 다음 실행일(nextTransferDate)은 자동으로 재계산됩니다.<br>
+ * ※ IDOR 방지를 위해 부모/자녀 관계가 아닌 타인의 AutoTransfer는 수정할 수 없습니다.
+ * </p>
+ *
+ * @param userId 로그인한 사용자 ID
+ * @param req 수정할 자동이체 요청 정보 (금액, 이체일 등)
+ * @param autoTransferId 수정 대상 자동이체 ID
+ * @throws BusinessException AUTO_TRANSFER_NOT_FOUND 자동이체 내역이 없는 경우
+ * @throws BusinessException ACCESS_DENIED 권한이 없는 사용자가 수정 시도한 경우
+ */
+@Transactional
+@Override
+public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, Long autoTransferId) {
 
-        // 2) 자동이체 조회
-        AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
-            .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+    // 1) 자동이체 조회
+    AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
+        .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
-        // 3) 자동이체 소유권 검증 (IDOR 방지)
-        // 조회한 자동이체가 요청 대상 유저(req.userId())의 것이 맞는지 확인
-        // 4) 자동이체 소유자 조회 및 검증
-        CoreUser user = transfer.getUser();
-        
-        // 로그인한 유저(userId)가 자동이체 소유자(user.getId())와 다르다면, 부모-자녀 관계여야 함
-        if (!userId.equals(user.getId())) {
-             boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, user.getId());
-             if (!isParent) {
-                 throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
-             }
+    // 2) 권한 검증 — 자동이체 소유자 또는 부모만 허용
+    CoreUser owner = transfer.getUser();
+
+    if (!userId.equals(owner.getId())) {
+        boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, owner.getId());
+        if (!isParent) {
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
         }
-        // 7) AutoTransfer 엔티티 업데이트
-        transfer.updateTransfer(req.amount(), req.transferDay(), AutoTransferDateCalculator.getNextTransferDate(req.transferDay()));
-
-        // 8) AutoTransfer 엔티티 저장
-        autoTransferRepository.save(transfer);
     }
+
+    // 3) 자동이체 정보 업데이트 (다음 이체일 포함)
+    transfer.updateTransfer(
+        req.amount(),
+        req.transferDay(),
+        AutoTransferDateCalculator.getNextTransferDate(req.transferDay())
+    );
+
+    // 4) 변경사항 저장
+    autoTransferRepository.save(transfer);
+}
 
     /**
      * 자동이체 삭제 기능 구현.
