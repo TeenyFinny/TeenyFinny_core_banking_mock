@@ -1,5 +1,6 @@
 package dev.syntax.domain.account.service;
 
+import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.entity.Account;
@@ -185,15 +186,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
      */
     @Transactional
     @Override
-    public void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId) {
-        // 1) 권한 검증
-        // 로그인한 유저(userId)와 요청 대상 유저(req.userId())가 다르면 부모-자녀 관계 확인
-        if (!userId.equals(req.userId())) {
-            boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, req.userId());
-            if (!isParent) {
-                throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
-            }
-        }
+    public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, Long autoTransferId) {
 
         // 2) 자동이체 조회
         AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
@@ -201,33 +194,17 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
         // 3) 자동이체 소유권 검증 (IDOR 방지)
         // 조회한 자동이체가 요청 대상 유저(req.userId())의 것이 맞는지 확인
-        if (!transfer.getUser().getId().equals(req.userId())) {
+        if (!transfer.getUser().getId().equals(userId)) {
             throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
         }
 
         // 4) 자녀 아이디로 사용자 조회
-        CoreUser user = coreUserRepository.findById(req.userId())
+        CoreUser user = coreUserRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
 
 
-        // 5) 출금 계좌, 입금 계좌 확인
-        Account from = accountRepository.findById(req.fromAccountId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND)); // 출금 계좌 없음
-        Account to = accountRepository.findById(req.toAccountId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
-
-        // 6) AutoTransfer 엔티티 생성
-        AutoTransfer newTransfer = AutoTransfer.builder()
-                .fromAccount(from)
-                .toAccount(to)
-                .amount(req.amount())
-                .memo(req.memo())
-                .transferDay(req.transferDay())
-                .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
-                .build();
-
         // 7) AutoTransfer 엔티티 업데이트
-        transfer.updateTransfer(newTransfer);
+        transfer.updateTransfer(req.amount(), req.transferDay(), AutoTransferDateCalculator.getNextTransferDate(req.transferDay()));
 
         // 8) AutoTransfer 엔티티 저장
         autoTransferRepository.save(transfer);
