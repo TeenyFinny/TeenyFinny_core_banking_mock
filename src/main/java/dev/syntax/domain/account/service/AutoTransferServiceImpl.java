@@ -199,6 +199,10 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         CoreUser user = coreUserRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
 
+        AutoTransfer autoTransfer = autoTransferRepository.findById(autoTransferId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+
+        autoTransferRepository.delete(autoTransfer);
         autoTransferRepository.deleteById(autoTransferId);
 
 
