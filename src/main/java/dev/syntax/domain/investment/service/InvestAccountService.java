@@ -1,17 +1,17 @@
 package dev.syntax.domain.investment.service;
 
 import dev.syntax.domain.account.util.AccountNumberGenerator;
-import dev.syntax.domain.investment.entity.InvestmentAccount;
-import dev.syntax.domain.investment.repository.InvestmentAccountRepository;
+import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.repository.InvestAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class InvestmentAccountService {
+public class InvestAccountService {
 
-    private final InvestmentAccountRepository investmentAccountRepository;
+    private final InvestAccountRepository investAccountRepository;
 
     /**
      * 투자계좌 생성
@@ -21,14 +21,14 @@ public class InvestmentAccountService {
      * @return 생성된 투자계좌
      */
     @Transactional
-    public InvestmentAccount createInvestmentAccount(Long userId, Long initialDeposit) {
+    public InvestAccount createInvestmentAccount(Long userId, Long initialDeposit) {
 
-        InvestmentAccount account = InvestmentAccount.builder()
+        InvestAccount account = InvestAccount.builder()
                 .cano(AccountNumberGenerator.generate())
                 .userId(userId)
                 .depositAmount(initialDeposit)
                 .build();
 
-        return investmentAccountRepository.save(account);
+        return investAccountRepository.save(account);
     }
 }

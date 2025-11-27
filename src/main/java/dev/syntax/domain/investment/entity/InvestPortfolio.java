@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Portfolio extends BaseEntity {
+public class InvestPortfolio extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +22,7 @@ public class Portfolio extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cano", nullable = false)
-    private InvestmentAccount cano;
+    private InvestAccount cano;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;

@@ -1,13 +1,13 @@
 package dev.syntax.domain.investment.service;
 
-import dev.syntax.domain.investment.entity.InvestmentAccount;
-import dev.syntax.domain.investment.entity.Portfolio;
+import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.entity.InvestPortfolio;
 import dev.syntax.domain.investment.entity.TradeOrder;
 import dev.syntax.domain.investment.enums.OrderStatus;
 import dev.syntax.domain.investment.enums.TradeType;
-import dev.syntax.domain.investment.repository.InvestmentAccountRepository;
-import dev.syntax.domain.investment.repository.PortfolioRepository;
-import dev.syntax.domain.investment.repository.TradeOrderRepository;
+import dev.syntax.domain.investment.repository.InvestAccountRepository;
+import dev.syntax.domain.investment.repository.InvestPortfolioRepository;
+import dev.syntax.domain.investment.repository.InvestTradeOrderRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
 import java.time.LocalDateTime;
@@ -18,11 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class TradeOrderServiceImpl implements TradeOrderService{
+public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
 
-    private final TradeOrderRepository tradeOrderRepository;
-    private final PortfolioRepository portfolioRepository;
-    private final InvestmentAccountRepository accountRepository;
+    private final InvestTradeOrderRepository investTradeOrderRepository;
+    private final InvestPortfolioRepository investPortfolioRepository;
+    private final InvestAccountRepository accountRepository;
 
     /**
      * 매수 주문 처리
@@ -39,7 +39,7 @@ public class TradeOrderServiceImpl implements TradeOrderService{
             long quantity,         // ord_qty (BIGINT)
             long price            // ord_unpr (BIGINT)
     ) {
-        InvestmentAccount account = getAccount(cano, userId);
+        InvestAccount account = getAccount(cano, userId);
 
         long totalCost = quantity * price; // 주문 금액 = 수량 * 단가
 
@@ -49,9 +49,9 @@ public class TradeOrderServiceImpl implements TradeOrderService{
         }
 
         // 2. 포트폴리오 조회 또는 신규 생성 (baas_portfolio)
-        Portfolio portfolio = portfolioRepository
+        InvestPortfolio portfolio = investPortfolioRepository
                 .findByCano_CanoAndProductCode(cano, productCode)
-                .orElseGet(() -> Portfolio.builder()
+                .orElseGet(() -> InvestPortfolio.builder()
                         .cano(account)
                         .userId(userId)
                         .productCode(productCode)
@@ -63,7 +63,7 @@ public class TradeOrderServiceImpl implements TradeOrderService{
 
         // 3. 보유수량/평균매입단가 갱신 (hldg_qty, pchs_avg_pric)
         portfolio.updateHolding(quantity, price);
-        portfolioRepository.save(portfolio);
+        investPortfolioRepository.save(portfolio);
 
         // 4. 예수금 차감 (dnca_tot_amt)
         account.withdraw(totalCost);
@@ -84,7 +84,7 @@ public class TradeOrderServiceImpl implements TradeOrderService{
                 .status(OrderStatus.REQUESTED)
                 .build();
 
-        return tradeOrderRepository.save(order);
+        return investTradeOrderRepository.save(order);
     }
 
     /**
@@ -102,10 +102,10 @@ public class TradeOrderServiceImpl implements TradeOrderService{
             long quantity,
             long price
     ) {
-        InvestmentAccount account = getAccount(cano, userId);
+        InvestAccount account = getAccount(cano, userId);
 
         // 1. 포트폴리오 존재/보유수량 확인
-        Portfolio portfolio = portfolioRepository
+        InvestPortfolio portfolio = investPortfolioRepository
                 .findByCano_CanoAndProductCode(cano, productCode)
                 .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.STOCK_NOT_FOUND));
 
@@ -115,7 +115,7 @@ public class TradeOrderServiceImpl implements TradeOrderService{
 
         // 2. 보유수량 감소
         portfolio.reduceHolding(quantity);
-        portfolioRepository.save(portfolio);
+        investPortfolioRepository.save(portfolio);
 
         // 3. 예수금 증가 (매도 금액 만큼 dnca_tot_amt 증가)
         long revenue = quantity * price;
@@ -137,13 +137,13 @@ public class TradeOrderServiceImpl implements TradeOrderService{
                 .status(OrderStatus.REQUESTED)
                 .build();
 
-        return tradeOrderRepository.save(order);
+        return investTradeOrderRepository.save(order);
     }
 
     /**
      * 계좌 존재 여부 + user_id 검증
      */
-    private InvestmentAccount getAccount(String cano, Long userId) {
+    private InvestAccount getAccount(String cano, Long userId) {
         return accountRepository.findById(cano)
                 .filter(acc -> acc.getUserId().equals(userId))
                 .orElseThrow(() ->

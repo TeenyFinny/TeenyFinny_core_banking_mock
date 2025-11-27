@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class InvestmentAccount extends BaseEntity {
+public class InvestAccount extends BaseEntity {
 
     @Id
     @Column(name = "cano", length = 20, nullable = false)

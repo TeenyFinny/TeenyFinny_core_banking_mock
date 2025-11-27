@@ -2,7 +2,7 @@ package dev.syntax.domain.investment.dto.res;
 
 import java.util.List;
 
-public record DashboardPortfolioRes(
+public record InvestDashboardPortfolioRes(
         Long userId,
         String depositAmount,
         String totEvluAmt,
