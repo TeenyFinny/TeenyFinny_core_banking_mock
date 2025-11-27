@@ -14,15 +14,15 @@ import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
+import dev.syntax.global.response.error.ErrorAuthCode;
+import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -45,6 +45,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
     private final AccountRepository accountRepository;
     private final CoreUserRepository coreUserRepository;
     private final BalanceService balanceService;
+    private final CoreUserRelationshipRepository relationshipRepository;
 
     /**
      * 자동이체를 등록합니다.
@@ -169,11 +170,13 @@ public class AutoTransferServiceImpl implements AutoTransferService {
     /**
      * 자동이체 정보를 수정합니다.
      * <p>
-     * 1. 자동이체 ID로 기존 자동이체 조회
-     * 2. 사용자 및 출금/입금 계좌 검증
-     * 3. 새로운 정보로 AutoTransfer 엔티티 생성
-     * 4. 기존 엔티티에 새 정보 업데이트
-     * 5. 변경사항 저장
+     * 1. 권한 검증: 본인 또는 부모만 수정 가능
+     * 2. 자동이체 ID로 기존 자동이체 조회
+     * 3. 소유권 검증: 수정하려는 자동이체가 대상 유저의 것인지 확인 (IDOR 방지)
+     * 4. 사용자 및 출금/입금 계좌 검증
+     * 5. 새로운 정보로 AutoTransfer 엔티티 생성
+     * 6. 기존 엔티티에 새 정보 업데이트
+     * 7. 변경사항 저장
      * </p>
      * <p>
      * 이체일이 변경되면 다음 실행일도 자동으로 재계산됩니다.
@@ -182,23 +185,37 @@ public class AutoTransferServiceImpl implements AutoTransferService {
     @Transactional
     @Override
     public void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId) {
-        // 먼저 자동이체 아이디를 조회
-        // req에 있는 정보로 업데이트
-        // 1) 자동이체 조회
+        // 1) 권한 검증
+        // 로그인한 유저(userId)와 요청 대상 유저(req.userId())가 다르면 부모-자녀 관계 확인
+        if (!userId.equals(req.userId())) {
+            boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, req.userId());
+            if (!isParent) {
+                throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+            }
+        }
+
+        // 2) 자동이체 조회
         AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
             .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
-        // 3) 자녀 아이디로 사용자 조회
+        // 3) 자동이체 소유권 검증 (IDOR 방지)
+        // 조회한 자동이체가 요청 대상 유저(req.userId())의 것이 맞는지 확인
+        if (!transfer.getUser().getId().equals(req.userId())) {
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        }
+
+        // 4) 자녀 아이디로 사용자 조회
         CoreUser user = coreUserRepository.findById(req.userId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
 
-        // 3) 출금 계좌, 입금 계좌 확인
+
+        // 5) 출금 계좌, 입금 계좌 확인
         Account from = accountRepository.findById(req.fromAccountId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND)); // 출금 계좌 없음
         Account to = accountRepository.findById(req.toAccountId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
 
-        // 4) AutoTransfer 엔티티 생성
+        // 6) AutoTransfer 엔티티 생성
         AutoTransfer newTransfer = AutoTransfer.builder()
                 .fromAccount(from)
                 .toAccount(to)
@@ -208,10 +225,12 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                 .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
                 .build();
 
-        // 5) AutoTransfer 엔티티 업데이트
+        // 7) AutoTransfer 엔티티 업데이트
         transfer.updateTransfer(newTransfer);
 
-        // 6) AutoTransfer 엔티티 저장
+        // 8) AutoTransfer 엔티티 저장
         autoTransferRepository.save(transfer);
     }
+
+    
 }

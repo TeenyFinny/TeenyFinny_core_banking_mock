@@ -78,6 +78,6 @@ public class AutoTransfer extends BaseTimeEntity {
         this.memo = newTransfer.getMemo();
         this.transferDay = newTransfer.getTransferDay();
         this.nextTransferDay = newTransfer.getNextTransferDay();
-        this.status = newTransfer.getStatus();
+        this.status = AutoTransferStatus.PROCESSING;
     }
 }
