@@ -2,12 +2,14 @@ package dev.syntax.domain.account.controller;
 
 import dev.syntax.domain.account.dto.AccountStatusUpdateReq;
 import dev.syntax.domain.account.dto.AccountStatusUpdateRes;
+import dev.syntax.domain.account.dto.AutoTransferCreateReq;
+import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.service.AccountService;
+import dev.syntax.domain.account.service.AutoTransferService;
 import dev.syntax.domain.account.dto.AccountItemRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.dto.UserAccountListRes;
 import dev.syntax.domain.account.entity.Account;
-import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class AccountController {
 
     private final AccountService accountService;
+    private final AutoTransferService autoTransferService;
 
     @PutMapping("/{number}/status")
     public AccountStatusUpdateRes updateAccountStatus(
@@ -71,6 +74,12 @@ public class AccountController {
     @GetMapping
     public UserAccountListRes getAccounts(@CurrentUserId Long userId) {
         return accountService.getUserAccounts(userId);
+    }
+
+    @PostMapping("/auto-transfer/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AutoTransferCreateRes createAutoTransfer(@CurrentUserId Long userId, @Valid @RequestBody AutoTransferCreateReq req) {
+        return autoTransferService.createAutoTransfer(userId, req);
     }
 }
 
