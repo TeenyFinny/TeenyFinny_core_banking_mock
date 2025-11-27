@@ -33,7 +33,6 @@ import java.util.List;
  *
  * @author TeenyFinny Core Banking Team
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
