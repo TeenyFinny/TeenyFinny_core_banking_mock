@@ -36,7 +36,7 @@ public class TradeOrderServiceImpl implements TradeOrderService{
             Long userId,          // BIGINT
             String productCode,   // pdno
             String productName,   // prdt_name
-            long quantity,         // ord_qty (INT)
+            long quantity,         // ord_qty (BIGINT)
             long price            // ord_unpr (BIGINT)
     ) {
         InvestmentAccount account = getAccount(cano, userId);
