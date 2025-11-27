@@ -216,8 +216,6 @@ public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, 
         AutoTransferDateCalculator.getNextTransferDate(req.transferDay())
     );
 
-    // 4) 변경사항 저장
-    autoTransferRepository.save(transfer);
 }
 
     /**
