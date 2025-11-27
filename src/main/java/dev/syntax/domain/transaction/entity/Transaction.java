@@ -49,18 +49,20 @@ public class Transaction extends BaseTimeEntity {
     @Column(name = "code", length = 10, nullable = false)
     private String code;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private TransactionType type;
 
-    @Column(name = "amount", nullable = false, precision = 15, scale = 3)
+    @Column(name = "amount", nullable = false, precision = 18, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "balance_after", nullable = false, precision = 15, scale = 3)
+    @Column(name = "balance_after", nullable = false, precision = 18, scale = 2)
     private BigDecimal balanceAfter;
 
     @Column(name = "merchant_name", length = 50, nullable = false)
     private String merchantName;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false)
     private TransactionCategory category;
 
