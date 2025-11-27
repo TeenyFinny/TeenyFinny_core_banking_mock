@@ -68,7 +68,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         Account to = accountRepository.findById(req.toAccountId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
 
-        CoreUser user = coreUserRepository.findById(req.userId())
+        CoreUser user = coreUserRepository.findByChannelUserId(req.userId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
         AutoTransfer transfer = AutoTransfer.builder()
                 .fromAccount(from)
