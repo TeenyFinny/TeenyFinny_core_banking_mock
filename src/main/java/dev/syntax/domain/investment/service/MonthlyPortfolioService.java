@@ -1,7 +1,7 @@
 package dev.syntax.domain.investment.service;
 
-import dev.syntax.domain.investment.dto.HoldingItem;
 import dev.syntax.domain.investment.dto.TopHoldingItem;
+import dev.syntax.domain.investment.dto.res.HoldingItemRes;
 import dev.syntax.domain.investment.dto.res.PortfolioRes;
 import dev.syntax.domain.investment.entity.PortfolioMonthly;
 import dev.syntax.domain.investment.entity.PortfolioMonthlySummary;
@@ -9,6 +9,7 @@ import dev.syntax.domain.investment.repository.PortfolioMonthlyRepository;
 import dev.syntax.domain.investment.repository.PortfolioMonthlySummaryRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
+import dev.syntax.global.service.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,17 +34,17 @@ public class MonthlyPortfolioService {
         List<PortfolioMonthly> items = monthlyRepo
                 .findAllByCanoAndUserIdAndYearAndMonth(cano, userId, year, month);
 
-        List<HoldingItem> holdings = items.stream()
-                .map(i -> new HoldingItem(
+        List<HoldingItemRes> holdings = items.stream()
+                .map(i -> new HoldingItemRes(
                         i.getProductCode(),
                         i.getProductName(),
-                        i.getHoldingQuantity(),
-                        i.getPurchaseAvgPrice(),
-                        i.getCurrentPrice(),
-                        i.getEvaluationAmount(),
-                        i.getProfitAmount(),
-                        i.getProfitRate(),
-                        i.getWeight()
+                        Utils.NumberFormattingService(i.getHoldingQuantity()),
+                        Utils.NumberFormattingService(i.getPurchaseAvgPrice()),
+                        Utils.NumberFormattingService(i.getCurrentPrice()),
+                        Utils.NumberFormattingService(i.getEvaluationAmount()),
+                        Utils.NumberFormattingService(i.getProfitAmount()),
+                        Utils.FormatToTwoDecimal(i.getProfitRate()),
+                        Utils.RoundToTwoDecimal(i.getWeight())
                 ))
                 .toList();
 
@@ -51,10 +52,10 @@ public class MonthlyPortfolioService {
 
         return new PortfolioRes(
                 summary.getUserId(),
-                summary.getDepositAmount(),
-                summary.getTotalEvaluationAmount(),
-                summary.getTotalProfitAmount(),
-                summary.getTotalProfitRate(),
+                Utils.NumberFormattingService(summary.getDepositAmount()),
+                Utils.NumberFormattingService(summary.getTotalEvaluationAmount()),
+                Utils.NumberFormattingService(summary.getTotalProfitAmount()),
+                Utils.FormatToTwoDecimal(summary.getTotalProfitRate()),
                 holdings,
                 top
         );

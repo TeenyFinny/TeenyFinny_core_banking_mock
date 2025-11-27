@@ -19,7 +19,7 @@ import java.util.List;
 @Slf4j
 public class PortfolioSnapshotService {
 
-    private final PortfolioService portfolioService;
+    private final InvestmentPortfolioServiceImpl portfolioService;
     private final PortfolioMonthlyRepository monthlyRepo;
     private final PortfolioMonthlySummaryRepository summaryRepo;
 

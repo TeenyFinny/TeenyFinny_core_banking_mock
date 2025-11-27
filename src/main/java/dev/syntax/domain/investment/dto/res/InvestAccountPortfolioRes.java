@@ -7,9 +7,9 @@ import java.util.List;
 public record InvestAccountPortfolioRes(
         String cano,
         Long userId,
-        Long depositAmount,
-        Long totEvluAmt,
-        Long totalProfitAmount,
-        Double totalProfitRate,
+        String depositAmount,
+        String totEvluAmt,
+        String totalProfitAmount,
+        String totalProfitRate,
         List<HoldingItem> holdings
 ) {}
