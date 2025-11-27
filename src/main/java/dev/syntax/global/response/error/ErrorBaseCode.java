@@ -58,10 +58,11 @@ public enum ErrorBaseCode implements ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     WITHDRAWAL_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     DEPOSIT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
-	ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+	  ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     PARENT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     CHILD_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
-    AUTO_TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 자동이체입니다."),
+    AUTO_TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+
 
     /**
      * 405 METHOD NOT ALLOWED - 허용되지 않은 메서드

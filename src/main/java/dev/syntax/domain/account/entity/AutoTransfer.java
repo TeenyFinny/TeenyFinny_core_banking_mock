@@ -62,4 +62,22 @@ public class AutoTransfer extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AutoTransferStatus status = AutoTransferStatus.PROCESSING;
+
+    /**
+     * 자동이체 정보를 다른 AutoTransfer 엔티티의 정보로 업데이트합니다.
+     * <p>
+     * 출금/입금 계좌, 금액, 메모, 이체일, 다음 실행일, 상태를 모두 업데이트합니다.
+     * </p>
+     *
+     * @param newTransfer 새로운 정보를 담고 있는 AutoTransfer 엔티티
+     */
+    public void updateTransfer(AutoTransfer newTransfer){
+        this.fromAccount = newTransfer.getFromAccount();
+        this.toAccount = newTransfer.getToAccount();
+        this.amount = newTransfer.getAmount();
+        this.memo = newTransfer.getMemo();
+        this.transferDay = newTransfer.getTransferDay();
+        this.nextTransferDay = newTransfer.getNextTransferDay();
+        this.status = AutoTransferStatus.PROCESSING;
+    }
 }
