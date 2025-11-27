@@ -49,6 +49,7 @@ public enum ErrorBaseCode implements ErrorCode {
      * 403 FORBIDDEN - 리소스 접근 금지
      */
     FORBIDDEN(HttpStatus.FORBIDDEN, "리소스 접근이 거부되었습니다."),
+    AUTO_TRANSFER_FORBIDDEN(HttpStatus.FORBIDDEN, "자동이체 접근이 거부되었습니다."),
 
     /**
      * 404 NOT FOUND - 찾을 수 없음
@@ -57,7 +58,7 @@ public enum ErrorBaseCode implements ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     WITHDRAWAL_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     DEPOSIT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
-	ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
+	  ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     PARENT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     CHILD_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),
     AUTO_TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND, "대상을 찾을 수 없습니다."),

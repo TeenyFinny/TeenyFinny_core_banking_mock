@@ -82,7 +82,7 @@ public interface AutoTransferService {
      */
     void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId);
 
-        /**
+     /**
      * 자동이체를 삭제합니다.
      *
      * <p>

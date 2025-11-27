@@ -19,7 +19,7 @@ import java.time.LocalDate;
  * @author TeenyFinny Core Banking Team
  */
 @Entity
-@Table(name = "core_user")
+@Table(name = "core_users")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -42,6 +42,5 @@ public class CoreUser extends BaseEntity {
 
     @Column(name = "channel_user_id", nullable = false)
     private Long channelUserId;
-
 
 }
