@@ -1,5 +1,7 @@
 package dev.syntax.domain.account.service;
 
+import dev.syntax.domain.account.dto.AutoTransferCreateReq;
+import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.util.AutoTransferDateCalculator;
 import dev.syntax.domain.user.entity.CoreUser;
@@ -38,13 +40,9 @@ public interface AutoTransferService {
      * @return 생성된 AutoTransfer 엔티티
      * @throws BusinessException 출금 또는 입금 계좌를 찾을 수 없는 경우
      */
-    AutoTransfer create(
-            Long fromAccountId,
-            Long toAccountId,
-            CoreUser user,
-            BigDecimal amount,
-            int transferDay,
-            String memo
+    AutoTransferCreateRes createAutoTransfer(
+            Long userId,
+            AutoTransferCreateReq req
     );
 
     /**

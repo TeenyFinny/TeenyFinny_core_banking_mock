@@ -1,5 +1,7 @@
 package dev.syntax.domain.account.service;
 
+import dev.syntax.domain.account.dto.AutoTransferCreateReq;
+import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.enums.AutoTransferStatus;
@@ -9,9 +11,12 @@ import dev.syntax.domain.account.util.AutoTransferDateCalculator;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +41,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
     private final AutoTransferRepository autoTransferRepository;
     private final AccountRepository accountRepository;
+    private final CoreUserRepository coreUserRepository;
     private final BalanceService balanceService;
 
     /**
@@ -48,31 +54,31 @@ public class AutoTransferServiceImpl implements AutoTransferService {
      */
     @Transactional
     @Override
-    public AutoTransfer create(
-            Long fromAccountId,
-            Long toAccountId,
-            CoreUser user,
-            BigDecimal amount,
-            int transferDay,
-            String memo
+    public AutoTransferCreateRes createAutoTransfer(
+            Long userId,
+            AutoTransferCreateReq req
     ) {
-        Account from = accountRepository.findById(fromAccountId)
+        Account from = accountRepository.findById(req.fromAccountId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND)); // 출금 계좌 없음
-        Account to = accountRepository.findById(toAccountId)
+        Account to = accountRepository.findById(req.toAccountId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
 
+        CoreUser user = coreUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
         AutoTransfer transfer = AutoTransfer.builder()
                 .fromAccount(from)
                 .toAccount(to)
                 .user(user)
-                .amount(amount)
-                .memo(memo)
-                .transferDay(transferDay)
-                .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(transferDay))
+                .amount(req.amount())
+                .memo(req.memo())
+                .transferDay(req.transferDay())
+                .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
                 .status(AutoTransferStatus.PROCESSING)
                 .build();
 
-        return autoTransferRepository.save(transfer);
+        autoTransferRepository.save(transfer);
+
+        return new AutoTransferCreateRes(transfer.getId());
     }
 
     /**
