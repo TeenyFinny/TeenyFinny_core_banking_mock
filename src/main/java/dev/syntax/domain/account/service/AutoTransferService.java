@@ -1,5 +1,6 @@
 package dev.syntax.domain.account.service;
 
+import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.entity.AutoTransfer;
@@ -80,7 +81,7 @@ public interface AutoTransferService {
      * @param autoTransferId 수정할 자동이체 ID
      * @throws BusinessException 자동이체, 계좌, 또는 사용자를 찾을 수 없는 경우
      */
-    void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId);
+    void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, Long autoTransferId);
 
      /**
      * 자동이체를 삭제합니다.
