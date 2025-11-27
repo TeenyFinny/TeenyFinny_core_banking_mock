@@ -29,7 +29,7 @@ public class TradeOrder extends BaseEntity {
     private InvestmentAccount cano;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private long userId;
 
     @Column(name = "gt_uid", length = 32)
     private String globalUid;
@@ -48,10 +48,10 @@ public class TradeOrder extends BaseEntity {
     private String productName;
 
     @Column(name = "ord_qty", nullable = false)
-    private Integer quantity;
+    private long quantity;
 
     @Column(name = "ord_unpr", nullable = false)
-    private Long price;
+    private long price;
 
     @Column(name = "excg_id_dvsn_cd", length = 3, nullable = false)
     private String exchangeDivisionCode;
