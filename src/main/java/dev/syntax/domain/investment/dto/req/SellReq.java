@@ -8,6 +8,6 @@ public class SellReq {
     private Long userId;
     private String productCode;
     private String productName;
-    private int quantity;
+    private long quantity;
     private long price;
 }

@@ -3,13 +3,15 @@ package dev.syntax.domain.investment.controller;
 
 import dev.syntax.domain.investment.dto.req.BuyReq;
 import dev.syntax.domain.investment.dto.req.SellReq;
+import dev.syntax.domain.investment.dto.res.TradeOrderRes;
 import dev.syntax.domain.investment.entity.TradeOrder;
 import dev.syntax.domain.investment.service.TradeOrderService;
+import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/invest/trade")
+@RequestMapping("/core/investments/trade")
 @RequiredArgsConstructor
 public class TradeOrderController {
 
@@ -19,31 +21,35 @@ public class TradeOrderController {
      * 매수 주문
      */
     @PostMapping("/buy")
-    public TradeOrder buy(@RequestBody BuyReq req) {
+    public TradeOrderRes buy(@RequestBody BuyReq req, @CurrentUserId Long userId) {
 
-        return tradeOrderService.buy(
+        TradeOrder order = tradeOrderService.buy(
                 req.getCano(),
-                req.getUserId(),
+                userId,
                 req.getProductCode(),
                 req.getProductName(),
                 req.getQuantity(),
                 req.getPrice()
         );
+
+        return TradeOrderRes.from(order);
     }
 
     /**
      * 매도 주문
      */
     @PostMapping("/sell")
-    public TradeOrder sell(@RequestBody SellReq req) {
+    public TradeOrderRes sell(@RequestBody SellReq req, @CurrentUserId Long userId) {
 
-        return tradeOrderService.sell(
+        TradeOrder order = tradeOrderService.sell(
                 req.getCano(),
-                req.getUserId(),
+                userId,
                 req.getProductCode(),
                 req.getProductName(),
                 req.getQuantity(),
                 req.getPrice()
         );
+
+        return TradeOrderRes.from(order);
     }
 }

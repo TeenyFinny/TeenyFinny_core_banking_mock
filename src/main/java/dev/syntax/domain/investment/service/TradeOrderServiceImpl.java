@@ -36,12 +36,12 @@ public class TradeOrderServiceImpl implements TradeOrderService{
             Long userId,          // BIGINT
             String productCode,   // pdno
             String productName,   // prdt_name
-            int quantity,         // ord_qty (INT)
+            long quantity,         // ord_qty (INT)
             long price            // ord_unpr (BIGINT)
     ) {
         InvestmentAccount account = getAccount(cano, userId);
 
-        long totalCost = (long) quantity * price; // 주문 금액 = 수량 * 단가
+        long totalCost = quantity * price; // 주문 금액 = 수량 * 단가
 
         // 1. 예수금 부족 체크 (dnca_tot_amt)
         if (account.getDepositAmount() < totalCost) {
@@ -62,7 +62,7 @@ public class TradeOrderServiceImpl implements TradeOrderService{
                 );
 
         // 3. 보유수량/평균매입단가 갱신 (hldg_qty, pchs_avg_pric)
-        portfolio.updateHolding((long) quantity, price);
+        portfolio.updateHolding(quantity, price);
         portfolioRepository.save(portfolio);
 
         // 4. 예수금 차감 (dnca_tot_amt)
@@ -99,7 +99,7 @@ public class TradeOrderServiceImpl implements TradeOrderService{
             Long userId,
             String productCode,
             String productName,
-            int quantity,
+            long quantity,
             long price
     ) {
         InvestmentAccount account = getAccount(cano, userId);
@@ -114,11 +114,11 @@ public class TradeOrderServiceImpl implements TradeOrderService{
         }
 
         // 2. 보유수량 감소
-        portfolio.reduceHolding((long) quantity);
+        portfolio.reduceHolding(quantity);
         portfolioRepository.save(portfolio);
 
         // 3. 예수금 증가 (매도 금액 만큼 dnca_tot_amt 증가)
-        long revenue = (long) quantity * price;
+        long revenue = quantity * price;
         account.deposit(revenue);
         accountRepository.save(account);
 
