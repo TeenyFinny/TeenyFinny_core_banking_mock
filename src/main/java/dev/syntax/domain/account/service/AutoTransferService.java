@@ -67,4 +67,18 @@ public interface AutoTransferService {
      * @return 오늘 실행될 자동이체 목록
      */
     List<AutoTransfer> findTransfersByDate(LocalDate date);
+
+    /**
+     * 자동이체 정보를 수정합니다.
+     * <p>
+     * 기존 자동이체의 출금/입금 계좌, 금액, 이체일, 메모를 수정합니다.
+     * 이체일이 변경되면 다음 실행일도 자동으로 재계산됩니다.
+     * </p>
+     *
+     * @param userId         자동이체를 수정하는 사용자 ID
+     * @param req            수정할 자동이체 정보 (출금/입금 계좌, 금액, 이체일, 메모)
+     * @param autoTransferId 수정할 자동이체 ID
+     * @throws BusinessException 자동이체, 계좌, 또는 사용자를 찾을 수 없는 경우
+     */
+    void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId);
 }

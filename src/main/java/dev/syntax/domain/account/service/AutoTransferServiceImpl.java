@@ -15,6 +15,7 @@ import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import java.util.List;
  *
  * @author TeenyFinny Core Banking Team
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -63,7 +65,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         Account to = accountRepository.findById(req.toAccountId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
 
-        CoreUser user = coreUserRepository.findById(userId)
+        CoreUser user = coreUserRepository.findById(req.userId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
         AutoTransfer transfer = AutoTransfer.builder()
                 .fromAccount(from)
@@ -162,5 +164,54 @@ public class AutoTransferServiceImpl implements AutoTransferService {
     @Override
     public List<AutoTransfer> findTransfersByDate(LocalDate date) {
         return autoTransferRepository.findByNextTransferDay(date);
+    }
+
+    /**
+     * 자동이체 정보를 수정합니다.
+     * <p>
+     * 1. 자동이체 ID로 기존 자동이체 조회
+     * 2. 사용자 및 출금/입금 계좌 검증
+     * 3. 새로운 정보로 AutoTransfer 엔티티 생성
+     * 4. 기존 엔티티에 새 정보 업데이트
+     * 5. 변경사항 저장
+     * </p>
+     * <p>
+     * 이체일이 변경되면 다음 실행일도 자동으로 재계산됩니다.
+     * </p>
+     */
+    @Transactional
+    @Override
+    public void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId) {
+        // 먼저 자동이체 아이디를 조회
+        // req에 있는 정보로 업데이트
+        // 1) 자동이체 조회
+        AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
+            .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+
+        // 3) 자녀 아이디로 사용자 조회
+        CoreUser user = coreUserRepository.findById(req.userId())
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
+
+        // 3) 출금 계좌, 입금 계좌 확인
+        Account from = accountRepository.findById(req.fromAccountId())
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND)); // 출금 계좌 없음
+        Account to = accountRepository.findById(req.toAccountId())
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
+
+        // 4) AutoTransfer 엔티티 생성
+        AutoTransfer newTransfer = AutoTransfer.builder()
+                .fromAccount(from)
+                .toAccount(to)
+                .amount(req.amount())
+                .memo(req.memo())
+                .transferDay(req.transferDay())
+                .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
+                .build();
+
+        // 5) AutoTransfer 엔티티 업데이트
+        transfer.updateTransfer(newTransfer);
+
+        // 6) AutoTransfer 엔티티 저장
+        autoTransferRepository.save(transfer);
     }
 }
