@@ -34,8 +34,8 @@ public class AccountController {
     ) {
         return accountService.updateStatus(number, req.status());
     }
-    
-      /**
+
+    /**
      * 자녀 계좌 생성 API
      * <p>
      * 자녀의 입출금 통장 계좌를 생성하고 부모-자녀 간 가족 관계를 매핑합니다.
@@ -73,3 +73,4 @@ public class AccountController {
         return accountService.getUserAccounts(userId);
     }
 }
+
