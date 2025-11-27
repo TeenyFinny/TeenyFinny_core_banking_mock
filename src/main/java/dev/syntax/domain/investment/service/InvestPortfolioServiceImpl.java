@@ -3,15 +3,15 @@ package dev.syntax.domain.investment.service;
 import dev.syntax.domain.investment.dto.HoldingItem;
 import dev.syntax.domain.investment.dto.StockPrice;
 import dev.syntax.domain.investment.dto.TopHoldingItem;
-import dev.syntax.domain.investment.dto.cal.PortfolioCalcResult;
+import dev.syntax.domain.investment.dto.cal.InvestPortfolioCalcResult;
 import dev.syntax.domain.investment.dto.res.HoldingItemRes;
 import dev.syntax.domain.investment.dto.res.InvestAccountPortfolioRes;
-import dev.syntax.domain.investment.dto.res.DashboardPortfolioRes;
-import dev.syntax.domain.investment.dto.res.PortfolioRes;
-import dev.syntax.domain.investment.entity.InvestmentAccount;
-import dev.syntax.domain.investment.entity.Portfolio;
-import dev.syntax.domain.investment.repository.InvestmentAccountRepository;
-import dev.syntax.domain.investment.repository.PortfolioRepository;
+import dev.syntax.domain.investment.dto.res.InvestDashboardPortfolioRes;
+import dev.syntax.domain.investment.dto.res.InvestPortfolioRes;
+import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.entity.InvestPortfolio;
+import dev.syntax.domain.investment.repository.InvestAccountRepository;
+import dev.syntax.domain.investment.repository.InvestPortfolioRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
 import dev.syntax.global.service.Utils;
@@ -31,28 +31,28 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioService{
+public class InvestPortfolioServiceImpl implements InvestPortfolioService {
 
-    private final PortfolioRepository portfolioRepository;
-    private final InvestmentAccountRepository accountRepository;
+    private final InvestPortfolioRepository investPortfolioRepository;
+    private final InvestAccountRepository accountRepository;
     private final StockMarketService stockMarketService;
 
     /**
      * 공통 포트폴리오 계산 로직
      * 모든 API는 이 계산 결과를 기반으로 응답만 다르게 만든다.
      */
-    protected PortfolioCalcResult calculatePortfolio(String cano, Long userId) {
+    protected InvestPortfolioCalcResult calculatePortfolio(String cano, Long userId) {
 
         // 1) 계좌 조회
-        InvestmentAccount account = accountRepository.findByCano(cano)
+        InvestAccount account = accountRepository.findByCano(cano)
                 .filter(a -> a.getUserId().equals(userId))
                 .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND));
 
         // 2) 포트폴리오 로드
-        List<Portfolio> portfolios = portfolioRepository.findByCano_Cano(cano);
+        List<InvestPortfolio> portfolios = investPortfolioRepository.findByCano_Cano(cano);
         // 보유 종목이 전혀 없는 경우
         if (portfolios.isEmpty()) {
-            return PortfolioCalcResult.builder()
+            return InvestPortfolioCalcResult.builder()
                     .userId(userId)
                     .depositAmount(account.getDepositAmount())
                     .totalEvaluationAmount(0L)
@@ -63,7 +63,7 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
         }
 
         // 보유 종목 리스트
-        List<String> productCodes = portfolios.stream().map(Portfolio::getProductCode).toList();
+        List<String> productCodes = portfolios.stream().map(InvestPortfolio::getProductCode).toList();
 
         // 3) 현재가 로드
         Map<String, StockPrice> prices = stockMarketService.getPriceMap(productCodes);
@@ -73,7 +73,7 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
         List<HoldingItem> items = new ArrayList<>();
 
         // 4) 종목별 계산
-        for (Portfolio p : portfolios) {
+        for (InvestPortfolio p : portfolios) {
             StockPrice priceDto = prices.get(p.getProductCode());
             if (priceDto == null) {
                 log.warn("종목코드 '{}'의 현재가 정보를 찾을 수 없어 계산에서 제외합니다.", p.getProductCode());
@@ -158,7 +158,7 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
                 .toList();
 
         // 최종 계산 결과 전달
-        return PortfolioCalcResult.builder()
+        return InvestPortfolioCalcResult.builder()
                 .userId(userId)
                 .depositAmount(account.getDepositAmount())
                 .totalEvaluationAmount(totalEvalAmount.longValue())
@@ -172,14 +172,14 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
      *  1. 포트폴리오 상세 조회 API
      * 상위 3개 + 기타 포함
      */
-    public PortfolioRes getPortfolio(String cano, Long userId) {
+    public InvestPortfolioRes getPortfolio(String cano, Long userId) {
 
-        PortfolioCalcResult calc = calculatePortfolio(cano, userId);
+        InvestPortfolioCalcResult calc = calculatePortfolio(cano, userId);
         List<HoldingItemRes> holdings = convertToRes(calc.holdings());
 
         List<TopHoldingItem> topHoldings = buildTopHoldings(calc.holdings());
 
-        return new PortfolioRes(
+        return new InvestPortfolioRes(
                 calc.userId(),
                 Utils.NumberFormattingService(calc.depositAmount()),
                 Utils.NumberFormattingService(calc.totalEvaluationAmount()),
@@ -196,7 +196,8 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
      */
     public InvestAccountPortfolioRes getAccountPortfolio(String cano, Long userId) {
 
-        PortfolioCalcResult calc = calculatePortfolio(cano, userId);
+        InvestPortfolioCalcResult calc = calculatePortfolio(cano, userId);
+        List<HoldingItemRes> holdings = convertToRes(calc.holdings());
 
         return new InvestAccountPortfolioRes(
                 cano,
@@ -205,7 +206,7 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
                 Utils.NumberFormattingService(calc.totalEvaluationAmount()),
                 Utils.NumberFormattingService(calc.totalProfitAmount()),
                 Utils.FormatToTwoDecimal(calc.totalProfitRate()),
-                calc.holdings()
+                holdings
         );
     }
 
@@ -213,9 +214,9 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
      * 3. 대시보드 조회 API
      * 보유 종목 상위 3개만
      */
-    public DashboardPortfolioRes getDashboardPortfolio(String cano, Long userId) {
+    public InvestDashboardPortfolioRes getDashboardPortfolio(String cano, Long userId) {
 
-        PortfolioCalcResult calc = calculatePortfolio(cano, userId);
+        InvestPortfolioCalcResult calc = calculatePortfolio(cano, userId);
 
         List<HoldingItem> top3 = calc.holdings().stream()
                 .sorted((a, b) -> Double.compare(b.weight(), a.weight()))
@@ -223,7 +224,7 @@ public class InvestmentPortfolioServiceImpl implements InvestmentPortfolioServic
                 .toList();
         List<HoldingItemRes> resTop3 = convertToRes(top3);
 
-        return new DashboardPortfolioRes(
+        return new InvestDashboardPortfolioRes(
                 calc.userId(),
                 Utils.NumberFormattingService(calc.depositAmount()),
                 Utils.NumberFormattingService(calc.totalEvaluationAmount()),

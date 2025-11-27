@@ -11,5 +11,5 @@ public record InvestAccountPortfolioRes(
         String totEvluAmt,
         String totalProfitAmount,
         String totalProfitRate,
-        List<HoldingItem> holdings
+        List<HoldingItemRes> holdings
 ) {}

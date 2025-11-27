@@ -6,7 +6,7 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record PortfolioCalcResult(
+public record InvestPortfolioCalcResult(
         String cano,
         Long userId,
         Long depositAmount,

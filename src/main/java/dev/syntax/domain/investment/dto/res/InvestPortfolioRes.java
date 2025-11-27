@@ -4,7 +4,7 @@ import dev.syntax.domain.investment.dto.TopHoldingItem;
 
 import java.util.List;
 
-public record PortfolioRes(
+public record InvestPortfolioRes(
         Long userId,
         String  depositAmount,                 // 예수금
         String  totEvluAmt,         // 총 평가금액 (실시간)

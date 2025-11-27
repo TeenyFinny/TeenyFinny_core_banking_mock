@@ -1,11 +1,11 @@
 package dev.syntax.domain.investment.service;
 
 import dev.syntax.domain.investment.dto.HoldingItem;
-import dev.syntax.domain.investment.dto.cal.PortfolioCalcResult;
-import dev.syntax.domain.investment.entity.PortfolioMonthly;
-import dev.syntax.domain.investment.entity.PortfolioMonthlySummary;
-import dev.syntax.domain.investment.repository.PortfolioMonthlyRepository;
-import dev.syntax.domain.investment.repository.PortfolioMonthlySummaryRepository;
+import dev.syntax.domain.investment.dto.cal.InvestPortfolioCalcResult;
+import dev.syntax.domain.investment.entity.InvestPortfolioMonthly;
+import dev.syntax.domain.investment.entity.InvestPortfolioMonthlySummary;
+import dev.syntax.domain.investment.repository.InvestPortfolioMonthlyRepository;
+import dev.syntax.domain.investment.repository.InvestPortfolioMonthlySummaryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,14 +19,14 @@ import java.util.List;
 @Slf4j
 public class PortfolioSnapshotService {
 
-    private final InvestmentPortfolioServiceImpl portfolioService;
-    private final PortfolioMonthlyRepository monthlyRepo;
-    private final PortfolioMonthlySummaryRepository summaryRepo;
+    private final InvestPortfolioServiceImpl portfolioService;
+    private final InvestPortfolioMonthlyRepository monthlyRepo;
+    private final InvestPortfolioMonthlySummaryRepository summaryRepo;
 
     @Transactional
     public void createMonthlySnapshot(String cano, Long userId, int year, int month) {
 
-        PortfolioCalcResult calc = portfolioService.calculatePortfolio(cano, userId);
+        InvestPortfolioCalcResult calc = portfolioService.calculatePortfolio(cano, userId);
 
         if (calc.holdings() == null || calc.holdings().isEmpty()) {
              log.info("보유한 주식이 없어 포트폴리오를 생성할 수 없습니다. cano: {}", cano);
@@ -52,7 +52,7 @@ public class PortfolioSnapshotService {
                 : null;
 
         // ---- 2) Summary 저장 ----
-        PortfolioMonthlySummary summary = PortfolioMonthlySummary.builder()
+        InvestPortfolioMonthlySummary summary = InvestPortfolioMonthlySummary.builder()
                 .cano(cano)
                 .userId(userId)
                 .year(year)
@@ -74,8 +74,8 @@ public class PortfolioSnapshotService {
         summaryRepo.save(summary);
 
         // ---- 3) 종목별 스냅샷 저장 ----
-        List<PortfolioMonthly> snapshots = calc.holdings().stream()
-                .map(h -> PortfolioMonthly.builder()
+        List<InvestPortfolioMonthly> snapshots = calc.holdings().stream()
+                .map(h -> InvestPortfolioMonthly.builder()
                         .cano(cano)
                         .userId(userId)
                         .year(year)

@@ -2,11 +2,11 @@ package dev.syntax.domain.investment.service;
 
 import dev.syntax.domain.investment.dto.TopHoldingItem;
 import dev.syntax.domain.investment.dto.res.HoldingItemRes;
-import dev.syntax.domain.investment.dto.res.PortfolioRes;
-import dev.syntax.domain.investment.entity.PortfolioMonthly;
-import dev.syntax.domain.investment.entity.PortfolioMonthlySummary;
-import dev.syntax.domain.investment.repository.PortfolioMonthlyRepository;
-import dev.syntax.domain.investment.repository.PortfolioMonthlySummaryRepository;
+import dev.syntax.domain.investment.dto.res.InvestPortfolioRes;
+import dev.syntax.domain.investment.entity.InvestPortfolioMonthly;
+import dev.syntax.domain.investment.entity.InvestPortfolioMonthlySummary;
+import dev.syntax.domain.investment.repository.InvestPortfolioMonthlyRepository;
+import dev.syntax.domain.investment.repository.InvestPortfolioMonthlySummaryRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
 import dev.syntax.global.service.Utils;
@@ -22,16 +22,16 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class MonthlyPortfolioService {
 
-    private final PortfolioMonthlyRepository monthlyRepo;
-    private final PortfolioMonthlySummaryRepository summaryRepo;
+    private final InvestPortfolioMonthlyRepository monthlyRepo;
+    private final InvestPortfolioMonthlySummaryRepository summaryRepo;
 
-    public PortfolioRes getMonthlyPortfolio(String cano, Long userId, int year, int month) {
+    public InvestPortfolioRes getMonthlyPortfolio(String cano, Long userId, int year, int month) {
 
-        PortfolioMonthlySummary summary = summaryRepo
+        InvestPortfolioMonthlySummary summary = summaryRepo
                 .findByCanoAndUserIdAndYearAndMonth(cano, userId, year, month)
                 .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.PORTFOLIO_NOT_FOUND));
 
-        List<PortfolioMonthly> items = monthlyRepo
+        List<InvestPortfolioMonthly> items = monthlyRepo
                 .findAllByCanoAndUserIdAndYearAndMonth(cano, userId, year, month);
 
         List<HoldingItemRes> holdings = items.stream()
@@ -50,7 +50,7 @@ public class MonthlyPortfolioService {
 
         List<TopHoldingItem> top = buildTop(summary);
 
-        return new PortfolioRes(
+        return new InvestPortfolioRes(
                 summary.getUserId(),
                 Utils.NumberFormattingService(summary.getDepositAmount()),
                 Utils.NumberFormattingService(summary.getTotalEvaluationAmount()),
@@ -61,7 +61,7 @@ public class MonthlyPortfolioService {
         );
     }
 
-    private List<TopHoldingItem> buildTop(PortfolioMonthlySummary summary) {
+    private List<TopHoldingItem> buildTop(InvestPortfolioMonthlySummary summary) {
         List<TopHoldingItem> list = new ArrayList<>();
 
         if (summary.getTop1Name() != null)

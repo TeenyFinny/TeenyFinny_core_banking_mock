@@ -26,7 +26,7 @@ public class TradeOrder extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cano", nullable = false)
-    private InvestmentAccount cano;
+    private InvestAccount cano;
 
     @Column(name = "user_id", nullable = false)
     private long userId;

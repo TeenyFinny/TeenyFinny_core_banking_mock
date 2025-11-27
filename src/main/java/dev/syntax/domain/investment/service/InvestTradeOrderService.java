@@ -2,7 +2,7 @@ package dev.syntax.domain.investment.service;
 
 import dev.syntax.domain.investment.entity.TradeOrder;
 
-public interface TradeOrderService {
+public interface InvestTradeOrderService {
     public TradeOrder buy(
             String cano,          // CHAR(8)
             Long userId,
