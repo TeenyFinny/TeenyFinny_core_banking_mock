@@ -59,11 +59,11 @@ public class TransactionServiceImpl implements TransactionService {
                 .user(user)
                 .account(account)
                 .code(code.name())
-                .type(type != null ? type.name() : null)
+                .type(type != null ? type : null)
                 .amount(amount)
                 .balanceAfter(balanceAfter)
                 .merchantName(merchantName)
-                .category(category.name())
+                .category(category)
                 .status(status)
                 .transactionDate(LocalDateTime.now())
                 .build();
