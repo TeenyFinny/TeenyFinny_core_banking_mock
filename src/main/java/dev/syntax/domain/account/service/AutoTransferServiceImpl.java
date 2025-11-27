@@ -33,7 +33,6 @@ import java.util.List;
  *
  * @author TeenyFinny Core Banking Team
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,7 +42,6 @@ public class AutoTransferServiceImpl implements AutoTransferService {
     private final AccountRepository accountRepository;
     private final CoreUserRepository coreUserRepository;
     private final BalanceService balanceService;
-    private final CoreUserRepository coreUserRepository;
 
     /**
      * 자동이체를 등록합니다.
