@@ -46,7 +46,7 @@ public class Transaction extends BaseTimeEntity {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @Column(name = "code", length = 10, nullable = false)
+    @Column(name = "code", nullable = false)
     private String code;
 
     @Enumerated(EnumType.STRING)

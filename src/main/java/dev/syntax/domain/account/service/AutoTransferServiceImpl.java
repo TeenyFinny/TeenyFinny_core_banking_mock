@@ -13,11 +13,11 @@ import dev.syntax.domain.account.util.AutoTransferDateCalculator;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
-import dev.syntax.global.response.error.ErrorBaseCode;
 import dev.syntax.global.response.error.ErrorAuthCode;
-import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
+import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -129,10 +129,17 @@ public class AutoTransferServiceImpl implements AutoTransferService {
             // (상태 + 다음 실행일) → REQUIRES_NEW 트랜잭션으로 별도 반영
             updateStatusAndNextDate(t, AutoTransferStatus.SUCCESS);
 
-        } catch (RuntimeException e) {
+        } catch (BusinessException e) {
 
             // 출금/입금 중 오류 발생 시 FAIL 상태 저장
             updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
+
+            // 스케줄러에서 failCount++ 되도록 예외를 다시 던짐
+            throw e;
+        } catch (Exception e) {
+            // 예상치 못한 전역 오류 처리
+            updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
+            throw e;
         }
     }
 
