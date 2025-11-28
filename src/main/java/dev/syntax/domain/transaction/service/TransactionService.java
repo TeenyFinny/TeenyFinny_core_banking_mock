@@ -1,6 +1,9 @@
 package dev.syntax.domain.transaction.service;
 
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.transaction.dto.TransactionAllowanceHistoryRes;
+import dev.syntax.domain.transaction.dto.TransactionDetailItemRes;
+import dev.syntax.domain.transaction.dto.TransactionHistoryDetailRes;
 import dev.syntax.domain.transaction.dto.TransactionHistoryRes;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
@@ -56,4 +59,26 @@ public interface TransactionService {
      * @return 잔액 + 거래내역 전체 리스트
      */
     TransactionHistoryRes getHistory(String number);
+
+    /**
+     * 특정 계좌의 거래내역을 년/월로 필터링하여 조회합니다.
+     *
+     * @param number 계좌번호
+     * @param year 조회할 년도
+     * @param month 조회할 월
+     * @return 잔액 + 거래내역 리스트 (필터링된)
+     */
+    TransactionAllowanceHistoryRes getHistoryByMonth(String number, int year, int month);
+
+    /**
+     * 특정 거래의 상세 정보를 조회합니다.
+     * <p>
+     * 거래 ID로 단일 거래를 조회하여 거래 타입, 카테고리, 승인 금액 등
+     * 상세 정보를 반환합니다.
+     * </p>
+     *
+     * @param transactionId 거래 ID
+     * @return 거래 상세 정보
+     */
+    TransactionDetailItemRes getTransactionDetail(Long transactionId);
 }
