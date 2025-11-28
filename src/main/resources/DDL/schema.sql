@@ -1,16 +1,16 @@
 create table if not exists core_investment_account
 (
     cano         varchar(20) not null
-        primary key,
+    primary key,
     created_at   datetime(6) not null,
     dnca_tot_amt bigint      not null,
     user_id      bigint      not null
-);
+    );
 
 create table if not exists core_portfolio
 (
     portfolio_id  bigint auto_increment
-        primary key,
+    primary key,
     created_at    datetime(6) not null,
     hldg_qty      bigint      not null,
     pdno          varchar(12) not null,
@@ -19,13 +19,13 @@ create table if not exists core_portfolio
     user_id       bigint      not null,
     cano          varchar(20) not null,
     constraint FKa89uvrrhcudcyshrh3qdxf1dd
-        foreign key (cano) references core_investment_account (cano)
-);
+    foreign key (cano) references core_investment_account (cano)
+    );
 
 create table if not exists core_portfolio_monthly
 (
     id                bigint auto_increment
-        primary key,
+    primary key,
     cano              varchar(255) not null,
     created_at        datetime(6)  not null,
     current_price     bigint       not null,
@@ -40,12 +40,12 @@ create table if not exists core_portfolio_monthly
     user_id           bigint       not null,
     weight            double       not null,
     year              int          not null
-);
+    );
 
 create table if not exists core_portfolio_monthly_summary
 (
     id                      bigint auto_increment
-        primary key,
+    primary key,
     cano                    varchar(255) not null,
     created_at              datetime(6)  not null,
     deposit_amount          bigint       not null,
@@ -62,12 +62,12 @@ create table if not exists core_portfolio_monthly_summary
     total_profit_rate       double       not null,
     user_id                 bigint       not null,
     year                    int          not null
-);
+    );
 
 create table if not exists core_trade_orders
 (
     order_id        bigint auto_increment
-        primary key,
+    primary key,
     created_at      datetime(6)                                                                            not null,
     excg_id_dvsn_cd varchar(3)                                                                             not null,
     gt_uid          varchar(32)                                                                            null,
@@ -81,24 +81,24 @@ create table if not exists core_trade_orders
     user_id         bigint                                                                                 not null,
     cano            varchar(20)                                                                            not null,
     constraint FK6i1qvftku77eqliesyht3w0tb
-        foreign key (cano) references core_investment_account (cano)
-);
+    foreign key (cano) references core_investment_account (cano)
+    );
 
 create table if not exists core_users
 (
     user_id         bigint auto_increment
-        primary key,
+    primary key,
     created_at      datetime(6) not null,
     birth_date      date        not null,
     channel_user_id bigint      not null,
     name            varchar(50) not null,
     phone_number    varchar(20) not null
-);
+    );
 
 create table if not exists core_account
 (
     account_id    bigint auto_increment
-        primary key,
+    primary key,
     created_at    datetime(6)                                         not null,
     updated_at    datetime(6)                                         not null,
     balance       decimal(18, 2)                                      not null,
@@ -110,15 +110,15 @@ create table if not exists core_account
     type          enum ('ALLOWANCE', 'DEPOSIT', 'GOAL', 'INVESTMENT') not null,
     user_id       bigint                                              not null,
     constraint UK1ovbnvthgnidrly3n1tpqbjo2
-        unique (number),
+    unique (number),
     constraint FK4yyiw0m847nqvawwbjk26d8ty
-        foreign key (user_id) references core_users (user_id)
-);
+    foreign key (user_id) references core_users (user_id)
+    );
 
 create table if not exists core_auto_transfer
 (
     auto_transfer_id  bigint auto_increment
-        primary key,
+    primary key,
     created_at        datetime(6)                            not null,
     updated_at        datetime(6)                            not null,
     amount            decimal(15, 2)                         not null,
@@ -130,17 +130,17 @@ create table if not exists core_auto_transfer
     to_account_id     bigint                                 not null,
     user_id           bigint                                 not null,
     constraint FKbdfscu3d76ka3baibe1v6d168
-        foreign key (to_account_id) references core_account (account_id),
+    foreign key (to_account_id) references core_account (account_id),
     constraint FKooan3ryd3te1xuc388m3iymj3
-        foreign key (from_account_id) references core_account (account_id),
+    foreign key (from_account_id) references core_account (account_id),
     constraint FKqiuvg9msf6x9asxv04gdpc9tc
-        foreign key (user_id) references core_users (user_id)
-);
+    foreign key (user_id) references core_users (user_id)
+    );
 
 create table if not exists core_transaction
 (
     transaction_id   bigint auto_increment
-        primary key,
+    primary key,
     created_at       datetime(6)                                                             not null,
     updated_at       datetime(6)                                                             not null,
     amount           decimal(18, 2)                                                          not null,
@@ -154,31 +154,36 @@ create table if not exists core_transaction
     account_id       bigint                                                                  not null,
     user_id          bigint                                                                  not null,
     constraint FK3t09heg421w4yfhbt1pp9sry0
-        foreign key (user_id) references core_users (user_id),
+    foreign key (user_id) references core_users (user_id),
     constraint FKpdggopp8yw4pj8p9d9ppwadwf
-        foreign key (account_id) references core_account (account_id)
-);
+    foreign key (account_id) references core_account (account_id)
+    );
 
 create table if not exists core_user_relationship
 (
     relationship_id bigint auto_increment
-        primary key,
+    primary key,
     created_at      datetime(6) not null,
     child_id        bigint      not null,
     parent_id       bigint      not null,
     constraint FKen2bne2spcw8dd2qoix828f8h
-        foreign key (parent_id) references core_users (user_id),
+    foreign key (parent_id) references core_users (user_id),
     constraint FKtf928gb8mspdhcu5toxuso3sq
-        foreign key (child_id) references core_users (user_id)
-);
+    foreign key (child_id) references core_users (user_id)
+    );
 
 create table if not exists sample_entity
 (
     id         bigint auto_increment
-        primary key,
+    primary key,
     created_at datetime(6) not null,
     updated_at datetime(6) not null,
     price      varchar(64) not null
+    );
+CREATE TABLE shedlock (
+                          name VARCHAR(64) NOT NULL,
+                          lock_until TIMESTAMP(3) NOT NULL,
+                          locked_at TIMESTAMP(3) NOT NULL,
+                          locked_by VARCHAR(255) NOT NULL,
+                          PRIMARY KEY (name)
 );
-
-
