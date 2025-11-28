@@ -75,31 +75,5 @@ public class AccountController {
     public UserAccountListRes getAccounts(@CurrentUserId Long userId) {
         return accountService.getUserAccounts(userId);
     }
-
-    @PostMapping("/auto-transfer/create")
-    @ResponseStatus(HttpStatus.CREATED)
-    public AutoTransferCreateRes createAutoTransfer(@CurrentUserId Long userId, @Valid @RequestBody AutoTransferCreateReq req) {
-        return autoTransferService.createAutoTransfer(userId, req);
-    }
-
-    /**
-     * 자동이체 수정 API
-     * <p>
-     * 기존 자동이체의 정보를 수정합니다.
-     * 출금/입금 계좌, 금액, 이체일, 메모를 변경할 수 있습니다.
-     * </p>
-     *
-     * @param userId         X-Core-User-Id 헤더에서 추출된 사용자 ID
-     * @param req            수정할 자동이체 정보
-     * @param autoTransferId 수정할 자동이체 ID
-     */
-    @PutMapping("/auto-transfer/{autoTransferId}")
-    @ResponseStatus(HttpStatus.OK)
-    public void updateAutoTransfer(@CurrentUserId Long userId, 
-        @Valid @RequestBody AutoTransferCreateReq req,
-        @PathVariable Long autoTransferId
-    ) {
-        autoTransferService.updateAutoTransfer(userId, req, autoTransferId);
-    }
 }
 
