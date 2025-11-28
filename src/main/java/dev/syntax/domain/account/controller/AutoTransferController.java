@@ -1,5 +1,6 @@
 package dev.syntax.domain.account.controller;
 
+import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.service.AutoTransferService;
@@ -82,7 +83,7 @@ public class AutoTransferController {
     @PutMapping("/{autoTransferId}")
     @ResponseStatus(HttpStatus.OK)
     public void updateAutoTransfer(@CurrentUserId Long userId,
-                                   @Valid @RequestBody AutoTransferCreateReq req,
+                                   @Valid @RequestBody AllowanceUpdateAutoTransferReq req,
                                    @PathVariable Long autoTransferId
     ) {
         autoTransferService.updateAutoTransfer(userId, req, autoTransferId);
