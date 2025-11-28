@@ -3,6 +3,7 @@ package dev.syntax.domain.account.service;
 import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
+import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.enums.AutoTransferStatus;
@@ -20,7 +21,6 @@ import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -219,6 +219,38 @@ public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, 
 }
 
     /**
+     * 자동이체 납입일 변경 기능.
+     *
+     * <p>
+     * - transferDay 값을 변경
+     * - 변경된 납입일(payDay)을 기준으로 nextTransferDay를 재계산
+     * </p>
+     *
+     * @param userId 요청 사용자
+     * @param autoTransferId 자동이체 ID
+     * @param payDay 변경할 납입일
+     * @return 업데이트된 값 DTO
+     */
+    @Override
+    @Transactional
+    public UpdateAutoTransferDayRes updateAutoTransferDay(Long userId, Long autoTransferId, Integer payDay) {
+        CoreUser user = coreUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+
+        AutoTransfer autoTransfer = autoTransferRepository.findById(autoTransferId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+
+        autoTransfer.updateTransferDay(payDay);
+
+        LocalDate currentNext = autoTransfer.getNextTransferDay();
+        LocalDate newNextDate = AutoTransferDateCalculator.calculateNextTransferDate(currentNext, payDay);
+
+        autoTransfer.setNextTransferDay(newNextDate);
+
+        return new UpdateAutoTransferDayRes(autoTransferId, autoTransfer.getTransferDay());
+    }
+
+    /**
      * 자동이체 삭제 기능 구현.
      *
      * <p>
@@ -259,9 +291,6 @@ public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, 
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
         autoTransferRepository.delete(autoTransfer);
-        autoTransferRepository.deleteById(autoTransferId);
-
-
     }
-    
+
 }

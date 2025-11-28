@@ -76,4 +76,8 @@ public class AutoTransfer extends BaseTimeEntity {
         this.transferDay = newTransferDay;
         this.nextTransferDay = newNextTransferDay;
     }
+
+    public void updateTransferDay(Integer payDay) {
+        this.transferDay = payDay;
+    }
 }
