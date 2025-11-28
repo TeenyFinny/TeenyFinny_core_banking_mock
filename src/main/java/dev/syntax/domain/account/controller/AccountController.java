@@ -2,6 +2,7 @@ package dev.syntax.domain.account.controller;
 
 import dev.syntax.domain.account.dto.AccountStatusUpdateReq;
 import dev.syntax.domain.account.dto.AccountStatusUpdateRes;
+import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.service.AccountService;

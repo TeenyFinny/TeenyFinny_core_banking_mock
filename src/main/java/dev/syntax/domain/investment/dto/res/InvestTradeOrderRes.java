@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class TradeOrderRes {
+public class InvestTradeOrderRes {
     private TradeType tradeType;
 
     private String productCode;
@@ -22,8 +22,8 @@ public class TradeOrderRes {
 
     private OrderStatus status;
 
-    public static TradeOrderRes from(TradeOrder order) {
-        return TradeOrderRes.builder()
+    public static InvestTradeOrderRes from(TradeOrder order) {
+        return InvestTradeOrderRes.builder()
                 .tradeType(order.getTradeType())
                 .productCode(order.getProductCode())
                 .productName(order.getProductName())

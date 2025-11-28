@@ -6,14 +6,14 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import dev.syntax.domain.investment.entity.InvestmentAccount;
-import dev.syntax.domain.investment.entity.Portfolio;
+import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.entity.InvestPortfolio;
 import dev.syntax.domain.investment.entity.TradeOrder;
 import dev.syntax.domain.investment.enums.OrderStatus;
 import dev.syntax.domain.investment.enums.TradeType;
-import dev.syntax.domain.investment.repository.InvestmentAccountRepository;
-import dev.syntax.domain.investment.repository.PortfolioRepository;
-import dev.syntax.domain.investment.repository.TradeOrderRepository;
+import dev.syntax.domain.investment.repository.InvestAccountRepository;
+import dev.syntax.domain.investment.repository.InvestPortfolioRepository;
+import dev.syntax.domain.investment.repository.InvestTradeOrderRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
 import java.util.Optional;
@@ -26,25 +26,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class TradeOrderServiceImplTest {
+class InvestTradeOrderServiceImplTest {
 
     @Mock
-    private TradeOrderRepository tradeOrderRepository;
+    private InvestTradeOrderRepository investTradeOrderRepository;
 
     @Mock
-    private PortfolioRepository portfolioRepository;
+    private InvestPortfolioRepository investPortfolioRepository;
 
     @Mock
-    private InvestmentAccountRepository accountRepository;
+    private InvestAccountRepository accountRepository;
 
     @InjectMocks
-    private TradeOrderServiceImpl service;
+    private InvestTradeOrderServiceImpl service;
 
-    private InvestmentAccount account;
+    private InvestAccount account;
 
     @BeforeEach
     void setUp() {
-        account = InvestmentAccount.builder()
+        account = InvestAccount.builder()
                 .cano("12345678")
                 .userId(1L)
                 .depositAmount(1_000_000L)
@@ -61,10 +61,10 @@ class TradeOrderServiceImplTest {
         when(accountRepository.findById(cano))
                 .thenReturn(Optional.of(account));
 
-        when(portfolioRepository.findByCano_CanoAndProductCode(cano, "005930"))
+        when(investPortfolioRepository.findByCano_CanoAndProductCode(cano, "005930"))
                 .thenReturn(Optional.empty());
 
-        Portfolio savedPortfolio = Portfolio.builder()
+        InvestPortfolio savedPortfolio = InvestPortfolio.builder()
                 .id(1L)
                 .cano(account)
                 .userId(1L)
@@ -74,7 +74,7 @@ class TradeOrderServiceImplTest {
                 .purchaseAvgPrice(10000L)
                 .build();
 
-        when(portfolioRepository.save(any())).thenReturn(savedPortfolio);
+        when(investPortfolioRepository.save(any())).thenReturn(savedPortfolio);
 
         TradeOrder savedOrder = TradeOrder.builder()
                 .id(1L)
@@ -89,7 +89,7 @@ class TradeOrderServiceImplTest {
                 .status(OrderStatus.REQUESTED)
                 .build();
 
-        when(tradeOrderRepository.save(any())).thenReturn(savedOrder);
+        when(investTradeOrderRepository.save(any())).thenReturn(savedOrder);
 
         TradeOrder result = service.buy(
                 cano, 1L,
@@ -101,8 +101,8 @@ class TradeOrderServiceImplTest {
         assertThat(result.getProductCode()).isEqualTo("005930");
         assertThat(account.getDepositAmount()).isEqualTo(900_000L);
 
-        verify(portfolioRepository).save(any());
-        verify(tradeOrderRepository).save(any());
+        verify(investPortfolioRepository).save(any());
+        verify(investTradeOrderRepository).save(any());
     }
 
     // -----------------------------------------------------
@@ -132,7 +132,7 @@ class TradeOrderServiceImplTest {
         when(accountRepository.findById(cano)).thenReturn(Optional.of(account));
 
         // mock portfolio 생성
-        Portfolio portfolio = Portfolio.builder()
+        InvestPortfolio portfolio = InvestPortfolio.builder()
                 .id(1L)
                 .cano(account)
                 .userId(1L)
@@ -143,16 +143,16 @@ class TradeOrderServiceImplTest {
                 .build();
 
         // 포트폴리오 find 시 mock portfolio 반환
-        when(portfolioRepository.findByCano_CanoAndProductCode(cano,"005930"))
+        when(investPortfolioRepository.findByCano_CanoAndProductCode(cano,"005930"))
                 .thenReturn(Optional.of(portfolio));
 
 
         // 보유수량 감소 save(portfolio) 시 moc account 반환
-        when(portfolioRepository.save(any()))
+        when(investPortfolioRepository.save(any()))
                 .thenReturn(portfolio);
 
         // 예수금 증가 save(portfolio) 시 moc account 반환
-        when(tradeOrderRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(investTradeOrderRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
 
         // sell() 호출 후 결과 비교
@@ -179,7 +179,7 @@ class TradeOrderServiceImplTest {
         when(accountRepository.findById(cano))
                 .thenReturn(Optional.of(account));
 
-        Portfolio portfolio = Portfolio.builder()
+        InvestPortfolio portfolio = InvestPortfolio.builder()
                 .id(1L)
                 .cano(account)
                 .userId(1L)
@@ -189,7 +189,7 @@ class TradeOrderServiceImplTest {
                 .purchaseAvgPrice(10000L)
                 .build();
 
-        when(portfolioRepository.findByCano_CanoAndProductCode(cano, "005930"))
+        when(investPortfolioRepository.findByCano_CanoAndProductCode(cano, "005930"))
                 .thenReturn(Optional.of(portfolio));
 
         assertThatThrownBy(() ->

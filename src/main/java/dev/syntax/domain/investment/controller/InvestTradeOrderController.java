@@ -3,9 +3,9 @@ package dev.syntax.domain.investment.controller;
 
 import dev.syntax.domain.investment.dto.req.BuyReq;
 import dev.syntax.domain.investment.dto.req.SellReq;
-import dev.syntax.domain.investment.dto.res.TradeOrderRes;
+import dev.syntax.domain.investment.dto.res.InvestTradeOrderRes;
 import dev.syntax.domain.investment.entity.TradeOrder;
-import dev.syntax.domain.investment.service.TradeOrderService;
+import dev.syntax.domain.investment.service.InvestTradeOrderService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -13,17 +13,17 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/core/investments/trade")
 @RequiredArgsConstructor
-public class TradeOrderController {
+public class InvestTradeOrderController {
 
-    private final TradeOrderService tradeOrderService;
+    private final InvestTradeOrderService investTradeOrderService;
 
     /**
      * 매수 주문
      */
     @PostMapping("/buy")
-    public TradeOrderRes buy(@RequestBody BuyReq req, @CurrentUserId Long userId) {
+    public InvestTradeOrderRes buy(@RequestBody BuyReq req, @CurrentUserId Long userId) {
 
-        TradeOrder order = tradeOrderService.buy(
+        TradeOrder order = investTradeOrderService.buy(
                 req.getCano(),
                 userId,
                 req.getProductCode(),
@@ -32,16 +32,16 @@ public class TradeOrderController {
                 req.getPrice()
         );
 
-        return TradeOrderRes.from(order);
+        return InvestTradeOrderRes.from(order);
     }
 
     /**
      * 매도 주문
      */
     @PostMapping("/sell")
-    public TradeOrderRes sell(@RequestBody SellReq req, @CurrentUserId Long userId) {
+    public InvestTradeOrderRes sell(@RequestBody SellReq req, @CurrentUserId Long userId) {
 
-        TradeOrder order = tradeOrderService.sell(
+        TradeOrder order = investTradeOrderService.sell(
                 req.getCano(),
                 userId,
                 req.getProductCode(),
@@ -50,6 +50,6 @@ public class TradeOrderController {
                 req.getPrice()
         );
 
-        return TradeOrderRes.from(order);
+        return InvestTradeOrderRes.from(order);
     }
 }

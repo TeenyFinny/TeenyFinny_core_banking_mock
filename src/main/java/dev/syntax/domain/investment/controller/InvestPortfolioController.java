@@ -1,6 +1,6 @@
 package dev.syntax.domain.investment.controller;
 
-import dev.syntax.domain.investment.dto.res.InvestAccountPortfolioRes;
+import dev.syntax.domain.investment.dto.res.InvestPortfolioRes;
 import dev.syntax.domain.investment.service.InvestPortfolioService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
@@ -11,17 +11,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/core/investments/account")
-public class InvestAccountPortfolioController {
+@RequestMapping("/investments/portfolio")
+public class InvestPortfolioController {
 
+    private static final String CORE_USER_ID_HEADER = "X-Core-User-Id";
     private final InvestPortfolioService portfolioService;
 
-    /** 내 계좌 전체 정보 */
-    @GetMapping("/{cano}")
-    public InvestAccountPortfolioRes getAccountPortfolio(
+    /** 1. 포트폴리오 상세 조회 */
+    @GetMapping("/{cano}") // cno 나중에 빼기
+    public InvestPortfolioRes getPortfolio(
             @PathVariable String cano,
-            @CurrentUserId Long userId
+            @CurrentUserId Long userId // 헤더에서 추출로 변경
     ) {
-        return portfolioService.getAccountPortfolio(cano, userId);
+        return portfolioService.getPortfolio(cano, userId);
     }
+
+
 }

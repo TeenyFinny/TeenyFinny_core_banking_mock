@@ -1,8 +1,8 @@
 package dev.syntax.domain.investment.controller;
 
 import dev.syntax.domain.investment.dto.AccountItemRes;
-import dev.syntax.domain.investment.entity.InvestmentAccount;
-import dev.syntax.domain.investment.service.InvestmentAccountService;
+import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.service.InvestAccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class InvestAccountController {
 
-    private final InvestmentAccountService investmentAccountService;
+    private final InvestAccountService investAccountService;
 
     /**
      * 투자계좌 생성 API
@@ -23,7 +23,7 @@ public class InvestAccountController {
     @PostMapping("/investment")
     public AccountItemRes createInvestmentAccount(@CurrentUserId Long userId) {
         // 초기 예수금 0으로 세팅 (필요 시 프론트에서 받을 수도 있음)
-        InvestmentAccount account = investmentAccountService.createInvestmentAccount(userId, 0L);
+        InvestAccount account = investAccountService.createInvestmentAccount(userId, 0L);
 
         return AccountItemRes.builder()
                 .accountNumber(account.getCano())

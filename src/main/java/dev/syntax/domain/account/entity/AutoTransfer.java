@@ -71,14 +71,10 @@ public class AutoTransfer extends BaseTimeEntity {
      *
      * @param newTransfer 새로운 정보를 담고 있는 AutoTransfer 엔티티
      */
-    public void updateTransfer(AutoTransfer newTransfer){
-        this.fromAccount = newTransfer.getFromAccount();
-        this.toAccount = newTransfer.getToAccount();
-        this.amount = newTransfer.getAmount();
-        this.memo = newTransfer.getMemo();
-        this.transferDay = newTransfer.getTransferDay();
-        this.nextTransferDay = newTransfer.getNextTransferDay();
-        this.status = AutoTransferStatus.PROCESSING;
+    public void updateTransfer(BigDecimal newAmount, Integer newTransferDay, LocalDate newNextTransferDay){
+        this.amount = newAmount;
+        this.transferDay = newTransferDay;
+        this.nextTransferDay = newNextTransferDay;
     }
 
     public void updateTransferDay(Integer payDay) {

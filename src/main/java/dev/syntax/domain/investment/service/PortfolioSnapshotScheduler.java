@@ -1,7 +1,7 @@
 package dev.syntax.domain.investment.service;
 
-import dev.syntax.domain.investment.entity.InvestmentAccount;
-import dev.syntax.domain.investment.repository.InvestmentAccountRepository;
+import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.repository.InvestAccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PortfolioSnapshotScheduler {
 
-    private final InvestmentAccountRepository accountRepository;
+    private final InvestAccountRepository accountRepository;
     private final PortfolioSnapshotService snapshotService;
 
     @Scheduled(cron = "0 5 0 1 * *") // 매월 1일 00:05
@@ -25,9 +25,9 @@ public class PortfolioSnapshotScheduler {
         int year = now.getYear();
         int month = now.getMonthValue();
 
-        List<InvestmentAccount> accounts = accountRepository.findAll();
+        List<InvestAccount> accounts = accountRepository.findAll();
 
-        for (InvestmentAccount acc : accounts) {
+        for (InvestAccount acc : accounts) {
             snapshotService.createMonthlySnapshot(
                     acc.getCano(),
                     acc.getUserId(),

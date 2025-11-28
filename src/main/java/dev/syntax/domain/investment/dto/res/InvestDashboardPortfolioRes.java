@@ -1,15 +1,12 @@
 package dev.syntax.domain.investment.dto.res;
 
-import dev.syntax.domain.investment.dto.HoldingItem;
-
 import java.util.List;
 
-public record InvestAccountPortfolioRes(
-        String cano,
+public record InvestDashboardPortfolioRes(
         Long userId,
         String depositAmount,
         String totEvluAmt,
         String totalProfitAmount,
         String totalProfitRate,
-        List<HoldingItemRes> holdings
+        List<HoldingItemRes> top3Holdings
 ) {}
