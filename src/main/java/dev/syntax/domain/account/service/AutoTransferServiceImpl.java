@@ -1,7 +1,9 @@
 package dev.syntax.domain.account.service;
 
+import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
+import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.enums.AutoTransferStatus;
@@ -18,6 +20,7 @@ import dev.syntax.global.response.error.ErrorAuthCode;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +68,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         Account to = accountRepository.findById(req.toAccountId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
 
-        CoreUser user = coreUserRepository.findById(req.userId())
+        CoreUser user = coreUserRepository.findByChannelUserId(req.userId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
         AutoTransfer transfer = AutoTransfer.builder()
                 .fromAccount(from)
@@ -153,6 +156,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         // 상태 변경 (SUCCESS / FAIL)
         t.setStatus(status);
 
+        // 다음 실행일 갱신
         t.setNextTransferDay(
                 AutoTransferDateCalculator.getNextTransferDate(t.getTransferDay())
         );
@@ -172,69 +176,85 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         return autoTransferRepository.findByNextTransferDay(date);
     }
 
-    /**
-     * 자동이체 정보를 수정합니다.
-     * <p>
-     * 1. 권한 검증: 본인 또는 부모만 수정 가능
-     * 2. 자동이체 ID로 기존 자동이체 조회
-     * 3. 소유권 검증: 수정하려는 자동이체가 대상 유저의 것인지 확인 (IDOR 방지)
-     * 4. 사용자 및 출금/입금 계좌 검증
-     * 5. 새로운 정보로 AutoTransfer 엔티티 생성
-     * 6. 기존 엔티티에 새 정보 업데이트
-     * 7. 변경사항 저장
-     * </p>
-     * <p>
-     * 이체일이 변경되면 다음 실행일도 자동으로 재계산됩니다.
-     * </p>
-     */
-    @Transactional
-    @Override
-    public void updateAutoTransfer(Long userId, AutoTransferCreateReq req, Long autoTransferId) {
-        // 1) 권한 검증
-        // 로그인한 유저(userId)와 요청 대상 유저(req.userId())가 다르면 부모-자녀 관계 확인
-        if (!userId.equals(req.userId())) {
-            boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, req.userId());
-            if (!isParent) {
-                throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
-            }
-        }
+/**
+ * 자동이체 정보를 수정합니다.
+ *
+ * <p>권한 및 유효성 검증 흐름:</p>
+ * <ol>
+ *   <li>자동이체 ID로 기존 자동이체 조회</li>
+ *   <li>권한 검증: 자동이체 소유자이거나 부모-자녀 관계여야 수정 가능</li>
+ *   <li>자동이체 정보 업데이트</li>
+ *   <li>저장 후 영속성 컨텍스트 반영</li>
+ * </ol>
+ *
+ * <p>
+ * ※ 이체일 변경 시 다음 실행일(nextTransferDate)은 자동으로 재계산됩니다.<br>
+ * ※ IDOR 방지를 위해 부모/자녀 관계가 아닌 타인의 AutoTransfer는 수정할 수 없습니다.
+ * </p>
+ *
+ * @param userId 로그인한 사용자 ID
+ * @param req 수정할 자동이체 요청 정보 (금액, 이체일 등)
+ * @param autoTransferId 수정 대상 자동이체 ID
+ * @throws BusinessException AUTO_TRANSFER_NOT_FOUND 자동이체 내역이 없는 경우
+ * @throws BusinessException ACCESS_DENIED 권한이 없는 사용자가 수정 시도한 경우
+ */
+@Transactional
+@Override
+public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, Long autoTransferId) {
 
-        // 2) 자동이체 조회
-        AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+    // 1) 자동이체 조회
+    AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
+        .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
-        // 3) 자동이체 소유권 검증 (IDOR 방지)
-        // 조회한 자동이체가 요청 대상 유저(req.userId())의 것이 맞는지 확인
-        if (!transfer.getUser().getId().equals(req.userId())) {
+    // 2) 권한 검증 — 자동이체 소유자 또는 부모만 허용
+    CoreUser owner = transfer.getUser();
+
+    if (!userId.equals(owner.getId())) {
+        boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, owner.getId());
+        if (!isParent) {
             throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
         }
+    }
 
-        // 4) 자녀 아이디로 사용자 조회
-        CoreUser user = coreUserRepository.findById(req.userId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
+    // 3) 자동이체 정보 업데이트 (다음 이체일 포함)
+    transfer.updateTransfer(
+        req.amount(),
+        req.transferDay(),
+        AutoTransferDateCalculator.getNextTransferDate(req.transferDay())
+    );
 
+}
 
-        // 5) 출금 계좌, 입금 계좌 확인
-        Account from = accountRepository.findById(req.fromAccountId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND)); // 출금 계좌 없음
-        Account to = accountRepository.findById(req.toAccountId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
+    /**
+     * 자동이체 납입일 변경 기능.
+     *
+     * <p>
+     * - transferDay 값을 변경
+     * - 변경된 납입일(payDay)을 기준으로 nextTransferDay를 재계산
+     * </p>
+     *
+     * @param userId 요청 사용자
+     * @param autoTransferId 자동이체 ID
+     * @param payDay 변경할 납입일
+     * @return 업데이트된 값 DTO
+     */
+    @Override
+    @Transactional
+    public UpdateAutoTransferDayRes updateAutoTransferDay(Long userId, Long autoTransferId, Integer payDay) {
+        CoreUser user = coreUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
 
-        // 6) AutoTransfer 엔티티 생성
-        AutoTransfer newTransfer = AutoTransfer.builder()
-                .fromAccount(from)
-                .toAccount(to)
-                .amount(req.amount())
-                .memo(req.memo())
-                .transferDay(req.transferDay())
-                .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
-                .build();
+        AutoTransfer autoTransfer = autoTransferRepository.findById(autoTransferId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
-        // 7) AutoTransfer 엔티티 업데이트
-        transfer.updateTransfer(newTransfer);
+        autoTransfer.updateTransferDay(payDay);
 
-        // 8) AutoTransfer 엔티티 저장
-        autoTransferRepository.save(transfer);
+        LocalDate currentNext = autoTransfer.getNextTransferDay();
+        LocalDate newNextDate = AutoTransferDateCalculator.calculateNextTransferDate(currentNext, payDay);
+
+        autoTransfer.setNextTransferDay(newNextDate);
+
+        return new UpdateAutoTransferDayRes(autoTransferId, autoTransfer.getTransferDay());
     }
 
     /**
@@ -259,11 +279,13 @@ public class AutoTransferServiceImpl implements AutoTransferService {
      *
      * @param userId         삭제 요청을 보낸 사용자 ID
      * @param autoTransferId 삭제할 자동이체 엔티티의 ID
-     * @throws BusinessException <ul>
-     *                                                                                                                                                                                                                                                                                                           <li>{@code USER_NOT_FOUND} - 사용자 조회 실패</li>
-     *                                                                                                                                                                                                                                                                                                           <li>{@code AUTO_TRANSFER_NOT_FOUND} - 자동이체 조회 실패</li>
-     *                                                                                                                                                                                                                                                                                                           <li>{@code AUTO_TRANSFER_FORBIDDEN} - 사용자가 소유하지 않은 자동이체에 접근한 경우</li>
-     *                                                                                                                                                                                                                                                                                                       </ul>
+     *
+     * @throws BusinessException
+     *         <ul>
+     *             <li>{@code USER_NOT_FOUND} - 사용자 조회 실패</li>
+     *             <li>{@code AUTO_TRANSFER_NOT_FOUND} - 자동이체 조회 실패</li>
+     *             <li>{@code AUTO_TRANSFER_FORBIDDEN} - 사용자가 소유하지 않은 자동이체에 접근한 경우</li>
+     *         </ul>
      */
     @Override
     @Transactional
@@ -276,9 +298,6 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
         autoTransferRepository.delete(autoTransfer);
-        autoTransferRepository.deleteById(autoTransferId);
-
-
     }
 
 }

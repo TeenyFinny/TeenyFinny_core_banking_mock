@@ -55,4 +55,12 @@ public class AutoTransferDateCalculator {
 
         return thisMonth;
     }
+
+    public static LocalDate calculateNextTransferDate(LocalDate currentNext, Integer newPayDay) {
+
+        int lastDayOfMonth = currentNext.lengthOfMonth();
+        int validDay = Math.min(newPayDay, lastDayOfMonth);
+
+        return currentNext.withDayOfMonth(validDay);
+    }
 }
