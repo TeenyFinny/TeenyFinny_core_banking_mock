@@ -11,15 +11,13 @@ import dev.syntax.domain.account.util.AutoTransferDateCalculator;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
-import dev.syntax.global.response.error.ErrorBaseCode;
 import dev.syntax.global.response.error.ErrorAuthCode;
-import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
+import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -128,10 +126,17 @@ public class AutoTransferServiceImpl implements AutoTransferService {
             // (상태 + 다음 실행일) → REQUIRES_NEW 트랜잭션으로 별도 반영
             updateStatusAndNextDate(t, AutoTransferStatus.SUCCESS);
 
-        } catch (RuntimeException e) {
+        } catch (BusinessException e) {
 
             // 출금/입금 중 오류 발생 시 FAIL 상태 저장
             updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
+
+            // 스케줄러에서 failCount++ 되도록 예외를 다시 던짐
+            throw e;
+        } catch (Exception e) {
+            // 예상치 못한 전역 오류 처리
+            updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
+            throw e;
         }
     }
 
@@ -148,7 +153,6 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         // 상태 변경 (SUCCESS / FAIL)
         t.setStatus(status);
 
-        // 다음 실행일 갱신
         t.setNextTransferDay(
                 AutoTransferDateCalculator.getNextTransferDate(t.getTransferDay())
         );
@@ -197,7 +201,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
         // 2) 자동이체 조회
         AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
-            .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
         // 3) 자동이체 소유권 검증 (IDOR 방지)
         // 조회한 자동이체가 요청 대상 유저(req.userId())의 것이 맞는지 확인
@@ -255,13 +259,11 @@ public class AutoTransferServiceImpl implements AutoTransferService {
      *
      * @param userId         삭제 요청을 보낸 사용자 ID
      * @param autoTransferId 삭제할 자동이체 엔티티의 ID
-     *
-     * @throws BusinessException
-     *         <ul>
-     *             <li>{@code USER_NOT_FOUND} - 사용자 조회 실패</li>
-     *             <li>{@code AUTO_TRANSFER_NOT_FOUND} - 자동이체 조회 실패</li>
-     *             <li>{@code AUTO_TRANSFER_FORBIDDEN} - 사용자가 소유하지 않은 자동이체에 접근한 경우</li>
-     *         </ul>
+     * @throws BusinessException <ul>
+     *                                                                                                                                                                                                                                                                                                           <li>{@code USER_NOT_FOUND} - 사용자 조회 실패</li>
+     *                                                                                                                                                                                                                                                                                                           <li>{@code AUTO_TRANSFER_NOT_FOUND} - 자동이체 조회 실패</li>
+     *                                                                                                                                                                                                                                                                                                           <li>{@code AUTO_TRANSFER_FORBIDDEN} - 사용자가 소유하지 않은 자동이체에 접근한 경우</li>
+     *                                                                                                                                                                                                                                                                                                       </ul>
      */
     @Override
     @Transactional
@@ -278,5 +280,5 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
 
     }
-    
+
 }
