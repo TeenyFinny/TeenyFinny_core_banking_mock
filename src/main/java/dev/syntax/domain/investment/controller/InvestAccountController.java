@@ -5,6 +5,7 @@ import dev.syntax.domain.investment.entity.InvestAccount;
 import dev.syntax.domain.investment.service.InvestAccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,5 +31,14 @@ public class InvestAccountController {
                 .userId(account.getUserId())
                 .balance(account.getDepositAmount())
                 .build();
+    }
+
+    /**
+     * 계좌 존재 여부 확인 API
+     * GET /core/banking/account/check
+     */
+    @GetMapping("/check")
+    public boolean checkAccount(@CurrentUserId Long userId) {
+        return investAccountService.checkAccount(userId);
     }
 }

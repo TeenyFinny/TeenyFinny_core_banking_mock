@@ -4,6 +4,7 @@ import dev.syntax.domain.investment.dto.res.InvestDashboardPortfolioRes;
 import dev.syntax.domain.investment.service.InvestPortfolioService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/core/investments/dashboard")
+@Slf4j
 public class InvestDashboardController {
     private final InvestPortfolioService portfolioService;
 
@@ -22,6 +24,7 @@ public class InvestDashboardController {
             @PathVariable String cano,
             @CurrentUserId Long userId
     ) {
+        log.info("응답");
         return portfolioService.getDashboardPortfolio(cano, userId);
     }
 }
