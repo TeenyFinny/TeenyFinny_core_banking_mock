@@ -20,7 +20,6 @@ import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -234,6 +233,19 @@ public class AutoTransferServiceImpl implements AutoTransferService {
         autoTransferRepository.save(transfer);
     }
 
+    /**
+     * 자동이체 납입일 변경 기능.
+     *
+     * <p>
+     * - transferDay 값을 변경
+     * - 변경된 납입일(payDay)을 기준으로 nextTransferDay를 재계산
+     * </p>
+     *
+     * @param userId 요청 사용자
+     * @param autoTransferId 자동이체 ID
+     * @param payDay 변경할 납입일
+     * @return 업데이트된 값 DTO
+     */
     @Override
     @Transactional
     public UpdateAutoTransferDayRes updateAutoTransferDay(Long userId, Long autoTransferId, Integer payDay) {
@@ -244,6 +256,11 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
 
         autoTransfer.updateTransferDay(payDay);
+
+        LocalDate currentNext = autoTransfer.getNextTransferDay();
+        LocalDate newNextDate = AutoTransferDateCalculator.calculateNextTransferDate(currentNext, payDay);
+
+        autoTransfer.setNextTransferDay(newNextDate);
 
         return new UpdateAutoTransferDayRes(autoTransferId, autoTransfer.getTransferDay());
     }
@@ -290,5 +307,5 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 
         autoTransferRepository.delete(autoTransfer);
     }
-    
+
 }
