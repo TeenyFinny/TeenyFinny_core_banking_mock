@@ -2,6 +2,9 @@ package dev.syntax.domain.transaction.service;
 
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.repository.AccountRepository;
+import dev.syntax.domain.transaction.dto.TransactionAllowanceHistoryRes;
+import dev.syntax.domain.transaction.dto.TransactionAllowanceItemRes;
+import dev.syntax.domain.transaction.dto.TransactionDetailItemRes;
 import dev.syntax.domain.transaction.dto.TransactionHistoryRes;
 import dev.syntax.domain.transaction.dto.TransactionItemRes;
 import dev.syntax.domain.transaction.entity.Transaction;
@@ -14,6 +17,8 @@ import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +35,7 @@ import java.util.List;
  *
  * @author TeenyFinny Core Banking Team
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -105,5 +111,93 @@ public class TransactionServiceImpl implements TransactionService {
                 .toList();
 
         return new TransactionHistoryRes(items, balance);
+    }
+
+        /**
+     * 계좌번호로 특정 년/월의 거래 내역을 조회합니다.
+     * <p>
+     * 계좌번호로 Account 엔티티를 조회한 후,
+     * 해당 계좌의 특정 년/월 거래 내역을 최신순으로 정렬하여 반환합니다.
+     * </p>
+     *
+     * @param number 계좌번호
+     * @param year 조회할 년도
+     * @param month 조회할 월
+     * @return 거래 내역 리스트 및 계좌 잔액 정보 {@link TransactionAllowanceHistoryRes}
+     * @throws BusinessException 계좌를 찾을 수 없는 경우
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public TransactionAllowanceHistoryRes getHistoryByMonth(String number, int year, int month) {
+
+        Account account = accountRepository.findByNumber(number)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
+        
+        BigDecimal balance = account.getBalance();
+
+        // 조회할 해당 월의 시작과 끝 날짜 계산
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0, 0);
+        LocalDateTime end = start.plusMonths(1);
+        
+        // 성능 최적화 쿼리 실행 (account ID로 조회)
+        List<Transaction> transactions =
+                transactionRepository.findMonthHistory(account.getId(), start, end);
+        
+        log.info("조회된 거래 건수: {}", transactions.size());
+
+        List<TransactionAllowanceItemRes> items = transactions.stream()
+                .map(t -> new TransactionAllowanceItemRes(
+                        t.getId(),
+                        t.getMerchantName(),
+                        t.getAmount(),
+                        TransactionCode.valueOf(t.getCode()),
+                        t.getTransactionDate(),
+                        t.getCategory(),
+                        t.getBalanceAfter()
+                ))
+                .toList();
+
+        log.info(items.toString());
+        return new TransactionAllowanceHistoryRes(items, balance);
+    }
+
+    /**
+     * 거래 ID로 단일 거래의 상세 정보를 조회합니다.
+     * <p>
+     * 거래 ID로 Transaction 엔티티를 조회하여
+     * 거래 타입, 카테고리, 승인 금액 등 상세 정보를 반환합니다.
+     * </p>
+     *
+     * @param transactionId 거래 ID
+     * @return 거래 상세 정보 {@link TransactionDetailItemRes}
+     * @throws BusinessException 거래를 찾을 수 없는 경우
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public TransactionDetailItemRes getTransactionDetail(Long transactionId) {
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
+
+        // 금액 포맷팅 (쉼표 구분)
+        java.text.DecimalFormat decimalFormat = new java.text.DecimalFormat("#,###");
+        String formattedAmount = decimalFormat.format(transaction.getAmount());
+        String formattedApproveAmount = decimalFormat.format(transaction.getAmount());
+        String formattedBalanceAfter = decimalFormat.format(transaction.getBalanceAfter());
+
+        // 날짜 포맷팅
+        java.time.format.DateTimeFormatter dateFormatter = 
+                java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
+        String formattedDate = transaction.getTransactionDate().format(dateFormatter);
+
+        return new TransactionDetailItemRes(
+                transaction.getMerchantName(),
+                formattedAmount,
+                formattedDate,
+                transaction.getType(),
+                transaction.getCategory(),
+                formattedApproveAmount,
+                formattedBalanceAfter
+        );
     }
 }
