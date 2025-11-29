@@ -31,4 +31,9 @@ public class InvestAccountService {
 
         return investAccountRepository.save(account);
     }
+
+    @Transactional(readOnly = true)
+    public boolean checkAccount(Long userId) {
+        return investAccountRepository.existsByUserId(userId);
+    }
 }

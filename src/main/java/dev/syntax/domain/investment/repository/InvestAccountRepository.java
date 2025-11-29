@@ -20,4 +20,6 @@ public interface InvestAccountRepository extends JpaRepository<InvestAccount, St
 
     // [락 X] - getPortfolio 등 읽기 전용 트랜잭션에서 사용 (추가 필요)
     Optional<InvestAccount> findByCano(String cano);
+
+    boolean existsByUserId(Long userId);
 }
