@@ -24,7 +24,6 @@ public class InvestDashboardController {
             @PathVariable String cano,
             @CurrentUserId Long userId
     ) {
-        log.info("응답");
         return portfolioService.getDashboardPortfolio(cano, userId);
     }
 }
