@@ -1,6 +1,6 @@
 package dev.syntax.domain.account.util;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 /**
  * 계좌번호 생성 유틸리티
@@ -11,7 +11,7 @@ import java.util.Random;
  * </p>
  */
 public class AccountNumberGenerator {
-    private static final Random RANDOM = new Random();
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     /**
      * 계좌번호를 생성합니다.
