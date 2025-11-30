@@ -1,9 +1,16 @@
 package dev.syntax.domain.investment.controller;
 
+import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.domain.investment.dto.AccountItemRes;
 import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.repository.InvestAccountRepository;
 import dev.syntax.domain.investment.service.InvestAccountService;
+import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.auth.annotation.CurrentUserId;
+import dev.syntax.global.exception.BusinessException;
+import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,15 +23,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class InvestAccountController {
 
     private final InvestAccountService investAccountService;
-
+    private final AccountService accountService;
+    private final CoreUserRepository coreUserRepository;
     /**
      * 투자계좌 생성 API
      * POST /core/banking/account/investment
      */
     @PostMapping("/investment")
     public AccountItemRes createInvestmentAccount(@CurrentUserId Long userId) {
+
+        // 자녀 CoreUser 조회
+        CoreUser child = coreUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
+        
+        // core_account 테이블에 추가
+        Account account1 =  accountService.createInvestAccount(child);
+
+
         // 초기 예수금 0으로 세팅 (필요 시 프론트에서 받을 수도 있음)
-        InvestAccount account = investAccountService.createInvestmentAccount(userId, 0L);
+        InvestAccount account = investAccountService.createInvestmentAccount(child.getId(), 0L);
 
         return AccountItemRes.builder()
                 .accountNumber(account.getCano())

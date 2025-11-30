@@ -41,6 +41,6 @@ public interface AccountService {
 
     AccountStatusUpdateRes updateStatus(String number, AccountStatus status);
     Account createAllowanceAccount(CoreUser user);
-
+    Account createInvestAccount(CoreUser user);
     Account createChildAllowanceAccount(Long id, DepositAccountReq req);
 }
