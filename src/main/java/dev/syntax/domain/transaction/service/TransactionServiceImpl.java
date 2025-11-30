@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -113,35 +114,35 @@ public class TransactionServiceImpl implements TransactionService {
         return new TransactionHistoryRes(items, balance);
     }
 
-        /**
-     * 계좌번호로 특정 년/월의 거래 내역을 조회합니다.
+    /**
+     * 계좌번호로 특정 기간의 거래 내역을 조회합니다.
      * <p>
      * 계좌번호로 Account 엔티티를 조회한 후,
-     * 해당 계좌의 특정 년/월 거래 내역을 최신순으로 정렬하여 반환합니다.
+     * 해당 계좌의 특정 기간 거래 내역을 최신순으로 정렬하여 반환합니다.
      * </p>
      *
      * @param number 계좌번호
-     * @param year 조회할 년도
-     * @param month 조회할 월
+     * @param startDate 조회 시작일
+     * @param endDate 조회 종료일
      * @return 거래 내역 리스트 및 계좌 잔액 정보 {@link TransactionAllowanceHistoryRes}
      * @throws BusinessException 계좌를 찾을 수 없는 경우
      */
     @Override
     @Transactional(readOnly = true)
-    public TransactionAllowanceHistoryRes getHistoryByMonth(String number, int year, int month) {
+    public TransactionAllowanceHistoryRes getHistoryByPeriod(String number, LocalDate startDate, LocalDate endDate) {
 
         Account account = accountRepository.findByNumber(number)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
         
         BigDecimal balance = account.getBalance();
 
-        // 조회할 해당 월의 시작과 끝 날짜 계산
-        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0, 0);
-        LocalDateTime end = start.plusMonths(1);
+        // 조회할 기간의 시작과 끝 날짜 계산 (자정 기준)
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay();
         
         // 성능 최적화 쿼리 실행 (account ID로 조회)
         List<Transaction> transactions =
-                transactionRepository.findMonthHistory(account.getId(), start, end);
+                transactionRepository.findHistoryByPeriod(account.getId(), start, end);
         
         log.info("조회된 거래 건수: {}", transactions.size());
 

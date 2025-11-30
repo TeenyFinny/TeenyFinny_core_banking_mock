@@ -12,6 +12,7 @@ import dev.syntax.domain.transaction.enums.TransactionType;
 import dev.syntax.domain.user.entity.CoreUser;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * 거래 내역 관리 서비스
@@ -61,14 +62,14 @@ public interface TransactionService {
     TransactionHistoryRes getHistory(String number);
 
     /**
-     * 특정 계좌의 거래내역을 년/월로 필터링하여 조회합니다.
+     * 특정 계좌의 거래내역을 기간별로 필터링하여 조회합니다.
      *
      * @param number 계좌번호
-     * @param year 조회할 년도
-     * @param month 조회할 월
+     * @param startDate 조회 시작일
+     * @param endDate 조회 종료일
      * @return 잔액 + 거래내역 리스트 (필터링된)
      */
-    TransactionAllowanceHistoryRes getHistoryByMonth(String number, int year, int month);
+    TransactionAllowanceHistoryRes getHistoryByPeriod(String number, LocalDate startDate, LocalDate endDate);
 
     /**
      * 특정 거래의 상세 정보를 조회합니다.
