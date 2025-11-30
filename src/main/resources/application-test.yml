@@ -16,3 +16,9 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
+core:
+  security:
+    enable-ip-filter: false   # 기본값은 false (local/dev)
+    allowed-ips:
+      - 127.0.0.1
+    api-key: dnLDp4Et6qXGXawyj4JRjOUjSyDjtl8/XxsAp2Fb8AAqTJ86M0LFDNQ69yBlxr9stZF7jIqjC2VMGALENV98RA== #mock
