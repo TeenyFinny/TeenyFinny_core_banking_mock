@@ -1,28 +1,35 @@
 spring:
-    application:
-        name: teenyfinny_core
-    lifecycle:
-        timeout-per-shutdown-phase: 60S # ??: ?, ???? ?? ????
-    profiles:
-        include: secret
+  application:
+    name: teenyfinny_core
+  lifecycle:
+    timeout-per-shutdown-phase: 60S # ??: ?, ???? ?? ????
+  profiles:
+    include: secret
+  jackson:
+    time-zone: Asia/Seoul
 
 server:
-    port: 8080
-    shutdown: graceful
+  port: 8080
+  shutdown: graceful
+  timezone: Asia/Seoul
 
 management:
-    endpoints:
-        web:
-            base-path: /actuator
-            exposure:
-                include: health, metrics, info, drain
-    endpoint:
-        health:
-            show-details: never
-            probes:
-                enabled: true
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health, metrics, info, drain, prometheus
+  endpoint:
     health:
-        livenessstate:
-            enabled: true
-        readinessstate:
-            enabled: true
+      show-details: never
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+  metrics:
+    tags:
+      application: ${spring.application.name:teenyfinny-core}

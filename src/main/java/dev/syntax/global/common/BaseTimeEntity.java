@@ -1,0 +1,21 @@
+package dev.syntax.global.common;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+
+@Getter
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public class BaseTimeEntity extends BaseEntity {
+
+    // 엔티티 수정 시각 자동 저장
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false, columnDefinition = "DATETIME(6)")
+    private LocalDateTime updatedAt;
+}

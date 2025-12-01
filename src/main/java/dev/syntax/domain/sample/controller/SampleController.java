@@ -37,13 +37,13 @@ public class SampleController {
 
         if (flag == 1){
             // ApiResponseUtil.success에 성공 코드만 넣어주면 메시지 없이 응답 코드만 보낼 수 있습니다.
-            log.info("성공 status만 응답!");
+            log.info("성공 status만 응답!!");
             res = ApiResponseUtil.success(SuccessCode.OK);
 
         } else if (flag == 2) {
             // 원한다면 data 항목에 성공 메시지를 추가해줄 수도 있습니다.
             log.info("성공 status와 메시지 응답!");
-            res = ApiResponseUtil.success(SuccessCode.OK, "성공입니다잉!");
+            res = ApiResponseUtil.success(SuccessCode.OK, "성공!");
 
         } else if (flag == 3) {
             // ApiResponseUtil.success에 성공 코드와 DTO를 넣어주면 api 형식에 맞게 응답이 생성됩니다.
@@ -51,10 +51,9 @@ public class SampleController {
             LocalDateTime created = LocalDateTime.now();
             SampleEntity sample = new SampleEntity();
             sample.setPrice(Utils.NumberFormattingService(230010000));
-            SampleEntity saved = sampleRepository.save(sample);
 
             log.info("성공 status와 data 바디 응답!");
-            res = ApiResponseUtil.success(SuccessCode.OK, SampleDTO.create(saved));
+            res = ApiResponseUtil.success(SuccessCode.OK, SampleDTO.create(sample));
 
         } else if (flag == 4) {
             // ApiResponseUtil.failure에 ErrorAuthCode를 넣어주면 errorCode도 함께 응답됩니다.
