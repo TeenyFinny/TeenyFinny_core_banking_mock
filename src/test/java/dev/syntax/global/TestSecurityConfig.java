@@ -4,8 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,7 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
-@Configuration
+@TestConfiguration
 public class TestSecurityConfig {
 
     @Bean
@@ -49,11 +49,11 @@ public class TestSecurityConfig {
             if (StringUtils.hasText(userId)) {
                 try {
                     Long coreUserId = Long.parseLong(userId);
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(coreUserId, null, Collections.emptyList());
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            coreUserId, null, Collections.emptyList()
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(auth);
                 } catch (NumberFormatException ignored) {
-                    // 테스트에서는 무시
                 }
             }
 
