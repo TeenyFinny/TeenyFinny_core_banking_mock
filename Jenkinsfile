@@ -228,6 +228,7 @@ sudo docker run -d \
   -e TZ=Asia/Seoul \
   --restart unless-stopped \
   -e SPRING_PROFILES_ACTIVE=secret \
+  --network host \
   -v /home/ubuntu/app-config/application-secret.yml:/config/application-secret.yml \
   teenyfinny/core:latest
 
@@ -331,6 +332,7 @@ sudo docker run -d \
   -e TZ=Asia/Seoul \
   --restart unless-stopped \
   -e SPRING_PROFILES_ACTIVE=secret \
+  --network host \
   -v /home/ubuntu/app-config/application-secret.yml:/config/application-secret.yml \
   teenyfinny/core:latest
 
