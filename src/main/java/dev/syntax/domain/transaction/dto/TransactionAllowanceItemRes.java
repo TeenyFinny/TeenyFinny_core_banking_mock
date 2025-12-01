@@ -23,7 +23,7 @@ public record TransactionAllowanceItemRes(
         Long transactionId,
         String merchantName,
         BigDecimal amount,
-        TransactionCode code,
+        String code,
         LocalDateTime transactionDate,
         TransactionCategory category,
         BigDecimal balanceAfter

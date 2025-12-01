@@ -130,7 +130,6 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional(readOnly = true)
     public TransactionAllowanceHistoryRes getHistoryByPeriod(String number, LocalDate startDate, LocalDate endDate) {
-
         Account account = accountRepository.findByNumber(number)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
         
@@ -139,27 +138,39 @@ public class TransactionServiceImpl implements TransactionService {
         // 조회할 기간의 시작과 끝 날짜 계산 (자정 기준)
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
+        log.info("계산된 조회 기간 - 시작: {}, 종료: {}", start, end);
         
         // 성능 최적화 쿼리 실행 (account ID로 조회)
         List<Transaction> transactions =
                 transactionRepository.findHistoryByPeriod(account.getId(), start, end);
         
         log.info("조회된 거래 건수: {}", transactions.size());
+        
+        if (!transactions.isEmpty()) {
+            log.info("조회된 거래 상세 정보:");
+            transactions.forEach(t -> 
+                log.info("  - ID: {}, 가맹점: {}, 금액: {}, 코드: {}, 일시: {}, 카테고리: {}, 거래후잔액: {}", 
+                    t.getId(), t.getMerchantName(), t.getAmount(), t.getCode(), 
+                    t.getTransactionDate(), t.getCategory(), t.getBalanceAfter())
+            );
+        }
 
         List<TransactionAllowanceItemRes> items = transactions.stream()
                 .map(t -> new TransactionAllowanceItemRes(
                         t.getId(),
                         t.getMerchantName(),
                         t.getAmount(),
-                        TransactionCode.valueOf(t.getCode()),
+                        t.getCode(),
                         t.getTransactionDate(),
                         t.getCategory(),
                         t.getBalanceAfter()
                 ))
                 .toList();
 
-        log.info(items.toString());
-        return new TransactionAllowanceHistoryRes(items, balance);
+        
+        TransactionAllowanceHistoryRes response = new TransactionAllowanceHistoryRes(items, balance);
+        
+        return response;
     }
 
     /**
@@ -176,6 +187,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional(readOnly = true)
     public TransactionDetailItemRes getTransactionDetail(Long transactionId) {
+        log.info("=== getTransactionDetail 호출됨 ===");
+        log.info("전달받은 transactionId: {}", transactionId);
 
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
@@ -191,14 +204,20 @@ public class TransactionServiceImpl implements TransactionService {
                 java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
         String formattedDate = transaction.getTransactionDate().format(dateFormatter);
 
-        return new TransactionDetailItemRes(
+        log.info("포맷팅된 값 - 금액: {}, 승인금액: {}, 거래후잔액: {}, 날짜: {}", 
+                formattedAmount, formattedApproveAmount, formattedBalanceAfter, formattedDate);
+
+        TransactionDetailItemRes response = new TransactionDetailItemRes(
                 transaction.getMerchantName(),
                 formattedAmount,
                 formattedDate,
                 transaction.getType(),
                 transaction.getCategory(),
                 formattedApproveAmount,
-                formattedBalanceAfter
+                formattedBalanceAfter,
+                transaction.getCode()
         );
+
+        return response;
     }
 }
