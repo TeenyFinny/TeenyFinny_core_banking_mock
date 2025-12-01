@@ -125,7 +125,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                 .toAccount(goal)
                 .user(child)
                 .amount(req.amount())
-                .memo("GOAL")
+                .memo("GOAL: " + goal.getProductName())
                 .transferDay(req.transferDay())
                 .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
                 .status(AutoTransferStatus.PROCESSING)
