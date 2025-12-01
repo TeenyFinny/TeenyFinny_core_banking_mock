@@ -84,6 +84,14 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
+    public Account createInvestAccount(CoreUser user) {
+        Account account = createAccount(user, "투자 통장", AccountType.INVESTMENT);
+        return accountRepository.save(account);
+    }
+
+
+    @Transactional
+    @Override
     public Account createChildAllowanceAccount(Long id, DepositAccountReq req) {
         if (!Objects.equals(id, req.parentCoreId())) {
             throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
