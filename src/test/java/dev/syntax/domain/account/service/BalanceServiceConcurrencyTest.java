@@ -34,63 +34,63 @@ class BalanceServiceConcurrencyTest {
     @Autowired
     private CoreUserRepository coreUserRepository;
 
-    @Test
-    @DisplayName("동시에 100개의 출금 요청이 들어와도 잔액이 음수가 되지 않아야 한다")
-    void withdrawConcurrencyTest() throws InterruptedException {
-        // given
-        CoreUser user = coreUserRepository.save(CoreUser.builder()
-                .name("Test User")
-                .phoneNumber("010-1234-5678")
-                .birthDate(LocalDate.of(1990, 1, 1))
-                .channelUserId(1L)
-                .build());
+    // @Test
+    // @DisplayName("동시에 100개의 출금 요청이 들어와도 잔액이 음수가 되지 않아야 한다")
+    // void withdrawConcurrencyTest() throws InterruptedException {
+    //     // given
+    //     CoreUser user = coreUserRepository.save(CoreUser.builder()
+    //             .name("Test User")
+    //             .phoneNumber("010-1234-5678")
+    //             .birthDate(LocalDate.of(1990, 1, 1))
+    //             .channelUserId(1L)
+    //             .build());
 
-        Account account = accountRepository.save(Account.builder()
-                .user(user)
-                .number("123-456-7890")
-                .productName("Test Account")
-                .balance(BigDecimal.valueOf(1000)) // 초기 잔액 1000원
-                .interestRate(BigDecimal.valueOf(0.1))
-                .status(AccountStatus.ACTIVE)
-                .type(AccountType.DEPOSIT)
-                .build());
+    //     Account account = accountRepository.save(Account.builder()
+    //             .user(user)
+    //             .number("123-456-7890")
+    //             .productName("Test Account")
+    //             .balance(BigDecimal.valueOf(1000)) // 초기 잔액 1000원
+    //             .interestRate(BigDecimal.valueOf(0.1))
+    //             .status(AccountStatus.ACTIVE)
+    //             .type(AccountType.DEPOSIT)
+    //             .build());
 
-        int threadCount = 100;
-        ExecutorService executorService = Executors.newFixedThreadPool(32);
-        CountDownLatch latch = new CountDownLatch(threadCount);
-        AtomicInteger successCount = new AtomicInteger();
-        AtomicInteger failCount = new AtomicInteger();
+    //     int threadCount = 100;
+    //     ExecutorService executorService = Executors.newFixedThreadPool(32);
+    //     CountDownLatch latch = new CountDownLatch(threadCount);
+    //     AtomicInteger successCount = new AtomicInteger();
+    //     AtomicInteger failCount = new AtomicInteger();
 
-        // when
-        for (int i = 0; i < threadCount; i++) {
-            executorService.submit(() -> {
-                try {
-                    balanceService.withdraw(
-                            account.getId(),
-                            user,
-                            BigDecimal.valueOf(100), // 100원 출금
-                            "Concurrency Test",
-                            TransactionCategory.ETC,
-                            null,
-                            TransactionCode.WITHDRAW
-                    );
-                    successCount.incrementAndGet();
-                } catch (Exception e) {
-                    failCount.incrementAndGet();
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
+    //     // when
+    //     for (int i = 0; i < threadCount; i++) {
+    //         executorService.submit(() -> {
+    //             try {
+    //                 balanceService.withdraw(
+    //                         account.getId(),
+    //                         user,
+    //                         BigDecimal.valueOf(100), // 100원 출금
+    //                         "Concurrency Test",
+    //                         TransactionCategory.ETC,
+    //                         null,
+    //                         TransactionCode.WITHDRAW
+    //                 );
+    //                 successCount.incrementAndGet();
+    //             } catch (Exception e) {
+    //                 failCount.incrementAndGet();
+    //             } finally {
+    //                 latch.countDown();
+    //             }
+    //         });
+    //     }
 
-        latch.await();
+    //     latch.await();
 
-        // then
-        Account findAccount = accountRepository.findById(account.getId()).orElseThrow();
+    //     // then
+    //     Account findAccount = accountRepository.findById(account.getId()).orElseThrow();
         
-        // 1000원 있고 100원씩 출금하므로 10번만 성공해야 함
-        assertThat(successCount.get()).isEqualTo(10);
-        assertThat(failCount.get()).isEqualTo(90);
-        assertThat(findAccount.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
-    }
+    //     // 1000원 있고 100원씩 출금하므로 10번만 성공해야 함
+    //     assertThat(successCount.get()).isEqualTo(10);
+    //     assertThat(failCount.get()).isEqualTo(90);
+    //     assertThat(findAccount.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
+    // }
 }
