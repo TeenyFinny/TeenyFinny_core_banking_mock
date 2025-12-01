@@ -13,6 +13,8 @@ import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.repository.AutoTransferRepository;
 import dev.syntax.domain.account.util.AutoTransferDateCalculator;
 import dev.syntax.domain.account.dto.GoalAutoTransferCreateReq;
+import dev.syntax.domain.goal.client.ChannelGoalClient;
+import dev.syntax.domain.goal.dto.GoalDepositEventReq;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.entity.CoreUser;
@@ -46,6 +48,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AutoTransferServiceImpl implements AutoTransferService {
 
+    private final ChannelGoalClient channelGoalClient;
     private final AutoTransferRepository autoTransferRepository;
     private final AccountRepository accountRepository;
     private final CoreUserRepository coreUserRepository;
@@ -178,6 +181,17 @@ public class AutoTransferServiceImpl implements AutoTransferService {
             // 3) 실행 성공 처리
             // (상태 + 다음 실행일) → REQUIRES_NEW 트랜잭션으로 별도 반영
             updateStatusAndNextDate(t, AutoTransferStatus.SUCCESS);
+
+            Account targetAccount = t.getToAccount();
+            if (targetAccount.getType().equals(AccountType.GOAL)) {
+                GoalDepositEventReq req = GoalDepositEventReq.builder()
+                        .accountNo(targetAccount.getNumber())
+                        .balanceAfter(targetAccount.getBalance())
+                        .build();
+
+                channelGoalClient.sendGoalDepositEvent(req);
+            }
+
 
         } catch (BusinessException e) {
 
