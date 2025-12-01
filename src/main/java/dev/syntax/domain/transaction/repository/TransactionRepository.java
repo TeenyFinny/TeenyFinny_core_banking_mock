@@ -20,7 +20,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
        "AND t.transactionDate >= :start " +
        "AND t.transactionDate < :end " +
        "ORDER BY t.transactionDate DESC")
-    List<Transaction> findMonthHistory(
+    List<Transaction> findHistoryByPeriod(
             @Param("accountId") Long accountId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);

@@ -16,7 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
 
 /**
  * 거래 내역 조회 API 컨트롤러
@@ -53,20 +56,20 @@ public class TransactionController {
     }
 
     /**
-     * 특정 계좌번호로 년/월별 거래 내역을 조회합니다.
+     * 특정 계좌번호로 기간별 거래 내역을 조회합니다.
      *
      * @param number 조회할 계좌번호 (예: "2001-002-444444")
-     * @param year 조회할 년도 (예: 2025)
-     * @param month 조회할 월 (예: 1)
+     * @param startDate 조회 시작일 (예: 2025-01-01)
+     * @param endDate 조회 종료일 (예: 2025-01-31)
      * @return 거래 내역 및 잔액 정보 {@link TransactionAllowanceHistoryRes}
      */
-    @GetMapping("/account/{number}/{year}/{month}")
-    public TransactionAllowanceHistoryRes getAccountTransactionsByMonth(
+    @GetMapping("/account/{number}/period")
+    public TransactionAllowanceHistoryRes getAccountTransactionsByPeriod(
             @PathVariable String number,
-            @PathVariable int year,
-            @PathVariable int month
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate
     ) {
-        return transactionService.getHistoryByMonth(number, year, month);
+        return transactionService.getHistoryByPeriod(number, startDate, endDate);
     }
 
     /**

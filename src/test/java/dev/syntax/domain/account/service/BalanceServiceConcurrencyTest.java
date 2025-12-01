@@ -50,45 +50,45 @@ class BalanceServiceConcurrencyTest {
     @Autowired
     private CoreUserRepository coreUserRepository;
 
-    /**
-     * 테스트용 TransactionService — 실제 기능 없음 (빈 충돌 방지)
-     */
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        public TransactionService transactionService() {
-            return new TransactionService() {
-                @Override
-                public void record(
-                        CoreUser user,
-                        Account account,
-                        TransactionType type,
-                        BigDecimal amount,
-                        BigDecimal balanceAfter,
-                        String merchantName,
-                        TransactionCategory category,
-                        TransactionStatus status,
-                        TransactionCode code
-                ) {
-                }
+    // /**
+    //  * 테스트용 TransactionService — 실제 기능 없음 (빈 충돌 방지)
+    //  */
+    // @TestConfiguration
+    // static class TestConfig {
+    //     @Bean
+    //     public TransactionService transactionService() {
+    //         return new TransactionService() {
+    //             @Override
+    //             public void record(
+    //                     CoreUser user,
+    //                     Account account,
+    //                     TransactionType type,
+    //                     BigDecimal amount,
+    //                     BigDecimal balanceAfter,
+    //                     String merchantName,
+    //                     TransactionCategory category,
+    //                     TransactionStatus status,
+    //                     TransactionCode code
+    //             ) {
+    //             }
 
-                @Override
-                public TransactionHistoryRes getHistory(String number) {
-                    return null;
-                }
+    //             @Override
+    //             public TransactionHistoryRes getHistory(String number) {
+    //                 return null;
+    //             }
 
-                @Override
-                public TransactionAllowanceHistoryRes getHistoryByMonth(String number, int year, int month) {
-                    return null;
-                }
+    //             @Override
+    //             public TransactionAllowanceHistoryRes getHistoryByMonth(String number, int year, int month) {
+    //                 return null;
+    //             }
 
-                @Override
-                public TransactionDetailItemRes getTransactionDetail(Long transactionId) {
-                    return null;
-                }
-            };
-        }
-    }
+    //             @Override
+    //             public TransactionDetailItemRes getTransactionDetail(Long transactionId) {
+    //                 return null;
+    //             }
+    //         };
+    //     }
+    // }
 
     @Test
     @DisplayName("동시에 100개 출금해도 성공 10, 실패 90, 잔액 0 보장")
