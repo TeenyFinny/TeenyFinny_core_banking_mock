@@ -1,6 +1,8 @@
 package dev.syntax.domain.account.repository;
 
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountStatus;
+import dev.syntax.domain.account.enums.AccountType;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -19,4 +21,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByNumber(String number);
     List<Account> findAllByUser_IdIn(List<Long> userIds);
+
+    Optional<Account> findFirstByUserIdAndType(Long userId, AccountType type);
+
+    Optional<Account> findFirstByUserIdAndTypeAndStatus(Long userId, AccountType type, AccountStatus status);
 }

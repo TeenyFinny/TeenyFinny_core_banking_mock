@@ -3,6 +3,7 @@ package dev.syntax.domain.account.controller;
 import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
+import dev.syntax.domain.account.dto.GoalAutoTransferCreateReq;
 import dev.syntax.domain.account.service.AutoTransferService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import jakarta.validation.Valid;
@@ -67,6 +68,23 @@ public class AutoTransferController {
     @ResponseStatus(HttpStatus.CREATED)
     public AutoTransferCreateRes createAutoTransfer(@CurrentUserId Long userId, @Valid @RequestBody AutoTransferCreateReq req) {
         return autoTransferService.createAutoTransfer(userId, req);
+    }
+
+    /**
+     * 부모가 자녀의 목표 계좌로 자동이체를 등록하는 API.
+     *
+     * <p>
+     * - 헤더의 {@code userId}: 부모 CoreUser ID<br>
+     * - 바디의 {@code childCoreId}: 자녀 CoreUser ID
+     * </p>
+     */
+    @PostMapping("/goal-by-user")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AutoTransferCreateRes createChildGoalAutoTransfer(
+            @CurrentUserId Long parentCoreId,
+            @Valid @RequestBody GoalAutoTransferCreateReq req
+    ) {
+        return autoTransferService.createChildGoalAutoTransfer(parentCoreId, req);
     }
 
     /**
