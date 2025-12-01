@@ -189,7 +189,11 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                         .balanceAfter(targetAccount.getBalance())
                         .build();
 
-                channelGoalClient.sendGoalDepositEvent(req);
+                try {
+                    channelGoalClient.sendGoalDepositEvent(req);
+                } catch (Exception e) {
+                    log.error("목표 계좌 입금 이벤트 전송 실패. 계좌번호: {}", targetAccount.getNumber(), e);
+                }
             }
 
 
