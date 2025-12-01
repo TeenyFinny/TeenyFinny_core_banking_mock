@@ -226,6 +226,7 @@ sudo docker run -d \
   --name core-server \
   -p 8080:8080 \
   -e TZ=Asia/Seoul \
+  --network host \
   --restart unless-stopped \
   -e SPRING_PROFILES_ACTIVE=secret \
   -v /home/ubuntu/app-config/application-secret.yml:/config/application-secret.yml \
@@ -329,6 +330,7 @@ sudo docker run -d \
   --name core-server \
   -p 8080:8080 \
   -e TZ=Asia/Seoul \
+  --network host \
   --restart unless-stopped \
   -e SPRING_PROFILES_ACTIVE=secret \
   -v /home/ubuntu/app-config/application-secret.yml:/config/application-secret.yml \
