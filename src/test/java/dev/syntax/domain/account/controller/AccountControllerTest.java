@@ -1,9 +1,6 @@
 package dev.syntax.domain.account.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import dev.syntax.domain.account.dto.AutoTransferCreateReq;
-import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.dto.DepositAccountReq;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.enums.AccountStatus;
@@ -29,8 +26,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -162,24 +157,24 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.message").exists());
     }
 
-//     @Test
-//     @DisplayName("자동이체 등록 성공")
-//     void createAutoTransfer_success() throws Exception {
-
-//     // given
-//     AutoTransferCreateReq req = new AutoTransferCreateReq(1L, 2L, 3L, new BigDecimal("10000"), 3, "용돈");
-
-//     AutoTransferCreateRes res = new AutoTransferCreateRes(99L);
-
-//     given(autoTransferService.createAutoTransfer(eq(1L), any(AutoTransferCreateReq.class)))
-//             .willReturn(res);
-
-//     // when & then
-//     mockMvc.perform(post("/core/banking/account/auto-transfer/create")
-//                     .header("X-Core-User-Id", "1") // SecurityContext userId
-//                     .contentType(MediaType.APPLICATION_JSON)
-//                     .content(objectMapper.writeValueAsString(req)))
-//             .andExpect(status().isCreated())
-//             .andExpect(jsonPath("$.autoTransferId").value(99L));
-//     }
+//    @Test
+//    @DisplayName("자동이체 등록 성공")
+//    void createAutoTransfer_success() throws Exception {
+//
+//    // given
+//    AutoTransferCreateReq req = new AutoTransferCreateReq(1L, 2L, 3L, new BigDecimal("10000"), 3, "용돈");
+//
+//    AutoTransferCreateRes res = new AutoTransferCreateRes(99L);
+//
+//    given(autoTransferService.createAutoTransfer(eq(1L), any(AutoTransferCreateReq.class)))
+//            .willReturn(res);
+//
+//    // when & then
+//    mockMvc.perform(post("/core/banking/account/auto-transfer/create")
+//                    .header("X-Core-User-Id", "1") // SecurityContext userId
+//                    .contentType(MediaType.APPLICATION_JSON)
+//                    .content(objectMapper.writeValueAsString(req)))
+//            .andExpect(status().isCreated())
+//            .andExpect(jsonPath("$.autoTransferId").value(99L));
+//    }
 }
