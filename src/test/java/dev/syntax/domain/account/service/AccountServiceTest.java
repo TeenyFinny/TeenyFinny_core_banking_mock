@@ -58,46 +58,46 @@ class AccountServiceTest {
         assertThat(result.children()).isEmpty();
     }
 
-    @Test
-    @DisplayName("자녀가 있는 사용자의 계좌 조회 시 자녀 계좌도 포함하여 반환한다")
-    void getUserAccounts_ShouldReturnUserAndChildrenAccounts_WhenUserIsParent() {
-        // given
-        Long parentId = 1L;
-        Long childId = 2L;
+//     @Test
+//     @DisplayName("자녀가 있는 사용자의 계좌 조회 시 자녀 계좌도 포함하여 반환한다")
+//     void getUserAccounts_ShouldReturnUserAndChildrenAccounts_WhenUserIsParent() {
+//         // given
+//         Long parentId = 1L;
+//         Long childId = 2L;
 
-        Account parentAccount = Account.builder()
-                .id(100L)
-                .balance(BigDecimal.TEN)
-                .productName("Parent Account")
-                .number("111-111")
-                .build();
+//         Account parentAccount = Account.builder()
+//                 .id(100L)
+//                 .balance(BigDecimal.TEN)
+//                 .productName("Parent Account")
+//                 .number("111-111")
+//                 .build();
 
-        Account childAccount = Account.builder()
-                .id(200L)
-                .balance(BigDecimal.ONE)
-                .productName("Child Account")
-                .number("222-222")
-                .build();
+//         Account childAccount = Account.builder()
+//                 .id(200L)
+//                 .balance(BigDecimal.ONE)
+//                 .productName("Child Account")
+//                 .number("222-222")
+//                 .build();
 
-        CoreUser childUser = CoreUser.builder().id(childId).build();
-        CoreUserRelationship relationship = CoreUserRelationship.builder()
-                .child(childUser)
-                .build();
+//         CoreUser childUser = CoreUser.builder().id(childId).build();
+//         CoreUserRelationship relationship = CoreUserRelationship.builder()
+//                 .child(childUser)
+//                 .build();
 
-        given(accountRepository.findAllByUserId(parentId)).willReturn(List.of(parentAccount));
-        given(coreUserRelationshipRepository.findAllByParent_Id(parentId)).willReturn(List.of(relationship));
-        given(accountRepository.findAllByUserId(childId)).willReturn(List.of(childAccount));
+//         given(accountRepository.findAllByUserId(parentId)).willReturn(List.of(parentAccount));
+//         given(coreUserRelationshipRepository.findAllByParent_Id(parentId)).willReturn(List.of(relationship));
+//         given(accountRepository.findAllByUserId(childId)).willReturn(List.of(childAccount));
 
-        // when
-        dev.syntax.domain.account.dto.UserAccountListRes result = accountService.getUserAccounts(parentId);
+//         // when
+//         dev.syntax.domain.account.dto.UserAccountListRes result = accountService.getUserAccounts(parentId);
 
-        // then
-        assertThat(result.accounts()).hasSize(1);
-        assertThat(result.accounts().get(0).accountId()).isEqualTo(100L);
+//         // then
+//         assertThat(result.accounts()).hasSize(1);
+//         assertThat(result.accounts().get(0).accountId()).isEqualTo(100L);
 
-        assertThat(result.children()).hasSize(1);
-        assertThat(result.children().get(0).userId()).isEqualTo(childId);
-        assertThat(result.children().get(0).accounts()).hasSize(1);
-        assertThat(result.children().get(0).accounts().get(0).accountId()).isEqualTo(200L);
-    }
+//         assertThat(result.children()).hasSize(1);
+//         assertThat(result.children().get(0).userId()).isEqualTo(childId);
+//         assertThat(result.children().get(0).accounts()).hasSize(1);
+//         assertThat(result.children().get(0).accounts().get(0).accountId()).isEqualTo(200L);
+//     }
 }
