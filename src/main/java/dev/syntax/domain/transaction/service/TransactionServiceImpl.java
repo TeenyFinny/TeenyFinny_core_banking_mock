@@ -2,6 +2,9 @@ package dev.syntax.domain.transaction.service;
 
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.repository.AccountRepository;
+import dev.syntax.domain.transaction.dto.TransactionAllowanceHistoryRes;
+import dev.syntax.domain.transaction.dto.TransactionAllowanceItemRes;
+import dev.syntax.domain.transaction.dto.TransactionDetailItemRes;
 import dev.syntax.domain.transaction.dto.TransactionHistoryRes;
 import dev.syntax.domain.transaction.dto.TransactionItemRes;
 import dev.syntax.domain.transaction.entity.Transaction;
@@ -14,10 +17,13 @@ import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,6 +36,7 @@ import java.util.List;
  *
  * @author TeenyFinny Core Banking Team
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -105,5 +112,112 @@ public class TransactionServiceImpl implements TransactionService {
                 .toList();
 
         return new TransactionHistoryRes(items, balance);
+    }
+
+    /**
+     * 계좌번호로 특정 기간의 거래 내역을 조회합니다.
+     * <p>
+     * 계좌번호로 Account 엔티티를 조회한 후,
+     * 해당 계좌의 특정 기간 거래 내역을 최신순으로 정렬하여 반환합니다.
+     * </p>
+     *
+     * @param number 계좌번호
+     * @param startDate 조회 시작일
+     * @param endDate 조회 종료일
+     * @return 거래 내역 리스트 및 계좌 잔액 정보 {@link TransactionAllowanceHistoryRes}
+     * @throws BusinessException 계좌를 찾을 수 없는 경우
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public TransactionAllowanceHistoryRes getHistoryByPeriod(String number, LocalDate startDate, LocalDate endDate) {
+        Account account = accountRepository.findByNumber(number)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
+        
+        BigDecimal balance = account.getBalance();
+
+        // 조회할 기간의 시작과 끝 날짜 계산 (자정 기준)
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay();
+        log.info("계산된 조회 기간 - 시작: {}, 종료: {}", start, end);
+        
+        // 성능 최적화 쿼리 실행 (account ID로 조회)
+        List<Transaction> transactions =
+                transactionRepository.findHistoryByPeriod(account.getId(), start, end);
+        
+        log.info("조회된 거래 건수: {}", transactions.size());
+        
+        if (!transactions.isEmpty()) {
+            log.info("조회된 거래 상세 정보:");
+            transactions.forEach(t -> 
+                log.info("  - ID: {}, 가맹점: {}, 금액: {}, 코드: {}, 일시: {}, 카테고리: {}, 거래후잔액: {}", 
+                    t.getId(), t.getMerchantName(), t.getAmount(), t.getCode(), 
+                    t.getTransactionDate(), t.getCategory(), t.getBalanceAfter())
+            );
+        }
+
+        List<TransactionAllowanceItemRes> items = transactions.stream()
+                .map(t -> new TransactionAllowanceItemRes(
+                        t.getId(),
+                        t.getMerchantName(),
+                        t.getAmount(),
+                        t.getCode(),
+                        t.getTransactionDate(),
+                        t.getCategory(),
+                        t.getBalanceAfter()
+                ))
+                .toList();
+
+        
+        TransactionAllowanceHistoryRes response = new TransactionAllowanceHistoryRes(items, balance);
+        
+        return response;
+    }
+
+    /**
+     * 거래 ID로 단일 거래의 상세 정보를 조회합니다.
+     * <p>
+     * 거래 ID로 Transaction 엔티티를 조회하여
+     * 거래 타입, 카테고리, 승인 금액 등 상세 정보를 반환합니다.
+     * </p>
+     *
+     * @param transactionId 거래 ID
+     * @return 거래 상세 정보 {@link TransactionDetailItemRes}
+     * @throws BusinessException 거래를 찾을 수 없는 경우
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public TransactionDetailItemRes getTransactionDetail(Long transactionId) {
+        log.info("=== getTransactionDetail 호출됨 ===");
+        log.info("전달받은 transactionId: {}", transactionId);
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
+
+        // 금액 포맷팅 (쉼표 구분)
+        java.text.DecimalFormat decimalFormat = new java.text.DecimalFormat("#,###");
+        String formattedAmount = decimalFormat.format(transaction.getAmount());
+        String formattedApproveAmount = decimalFormat.format(transaction.getAmount());
+        String formattedBalanceAfter = decimalFormat.format(transaction.getBalanceAfter());
+
+        // 날짜 포맷팅
+        java.time.format.DateTimeFormatter dateFormatter = 
+                java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
+        String formattedDate = transaction.getTransactionDate().format(dateFormatter);
+
+        log.info("포맷팅된 값 - 금액: {}, 승인금액: {}, 거래후잔액: {}, 날짜: {}", 
+                formattedAmount, formattedApproveAmount, formattedBalanceAfter, formattedDate);
+
+        TransactionDetailItemRes response = new TransactionDetailItemRes(
+                transaction.getMerchantName(),
+                formattedAmount,
+                formattedDate,
+                transaction.getType(),
+                transaction.getCategory(),
+                formattedApproveAmount,
+                formattedBalanceAfter,
+                transaction.getCode()
+        );
+
+        return response;
     }
 }

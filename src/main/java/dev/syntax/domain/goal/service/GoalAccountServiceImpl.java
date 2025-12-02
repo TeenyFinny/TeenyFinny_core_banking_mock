@@ -30,6 +30,7 @@ public class GoalAccountServiceImpl implements GoalAccountService {
     @Override
     @Transactional
     public Account createGoalAccount(Long parentId, GoalAccountCreateReq req) {
+        log.info("[GOAL] 계좌 생성 시작: userId={}", req.childCoreId());
         // 1. 가족 관계 검증
         if (!relationshipRepository.existsByParent_IdAndChild_Id(parentId, req.childCoreId())) {
             log.warn("[GOAL] 가족 관계 없음: parentId={}, childId={}", parentId, req.childCoreId());
@@ -39,6 +40,7 @@ public class GoalAccountServiceImpl implements GoalAccountService {
         // 2. 자녀 사용자 조회
         CoreUser child = userRepository.findById(req.childCoreId())
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+        log.info("[GOAL] 사용자 조회 완료: userId={}, userName={}", child.getId(), child.getName());
 
         // 3. 계좌 생성
         Account account = Account.builder()
@@ -50,6 +52,7 @@ public class GoalAccountServiceImpl implements GoalAccountService {
                 .type(AccountType.GOAL)
                 .build();
 
+        log.info("[GOAL] 생성 완료: productName = {}", account.getProductName());
         // 4. 저장 후 반환
         return accountRepository.save(account);
     }

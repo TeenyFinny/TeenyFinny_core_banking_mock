@@ -19,7 +19,7 @@ public class SecurityConfig {
 
     private final CoreSecurityProperties securityProperties;
     private final ObjectMapper objectMapper;
-    public static final String[] PUBLIC_URIS = {"/core/banking/init", "/test/**"};
+    public static final String[] PUBLIC_URIS = {"/core/banking/init", "/test/**", "/actuator/**"};
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
