@@ -123,7 +123,7 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
             investPortfolioRepository.save(portfolio); // 0이 아닐 때만 업데이트
         }
 
-        // 3. 예수금 증가 (매도 금액 만큼 dnca_tot_amt 증가)
+        // 4. 예수금 증가 (매도 금액 만큼 dnca_tot_amt 증가)
         long revenue = quantity * price;
         account.deposit(revenue);
         accountRepository.save(account);
