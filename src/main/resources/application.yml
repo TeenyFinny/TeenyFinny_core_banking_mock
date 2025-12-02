@@ -7,6 +7,9 @@ spring:
     include: secret
   jackson:
     time-zone: Asia/Seoul
+  mvc:
+    servlet:
+      path: /core
 
 server:
   port: 8080

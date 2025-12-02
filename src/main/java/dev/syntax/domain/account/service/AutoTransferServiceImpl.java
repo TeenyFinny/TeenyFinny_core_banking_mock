@@ -6,10 +6,15 @@ import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.entity.AutoTransfer;
+import dev.syntax.domain.account.enums.AccountStatus;
+import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.enums.AutoTransferStatus;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.repository.AutoTransferRepository;
 import dev.syntax.domain.account.util.AutoTransferDateCalculator;
+import dev.syntax.domain.account.dto.GoalAutoTransferCreateReq;
+import dev.syntax.domain.goal.client.ChannelGoalClient;
+import dev.syntax.domain.goal.dto.GoalDepositEventReq;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.entity.CoreUser;
@@ -43,6 +48,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AutoTransferServiceImpl implements AutoTransferService {
 
+    private final ChannelGoalClient channelGoalClient;
     private final AutoTransferRepository autoTransferRepository;
     private final AccountRepository accountRepository;
     private final CoreUserRepository coreUserRepository;
@@ -76,6 +82,53 @@ public class AutoTransferServiceImpl implements AutoTransferService {
                 .user(user)
                 .amount(req.amount())
                 .memo(req.memo())
+                .transferDay(req.transferDay())
+                .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
+                .status(AutoTransferStatus.PROCESSING)
+                .build();
+
+        autoTransferRepository.save(transfer);
+
+        return new AutoTransferCreateRes(transfer.getId());
+    }
+
+    /**
+     * 부모가 자녀의 용돈 계좌(ALLOWANCE)에서 자녀의 활성 목표 계좌(GOAL, ACTIVE)로
+     * 자동이체를 등록합니다.
+     */
+    @Transactional
+    @Override
+    public AutoTransferCreateRes createChildGoalAutoTransfer(
+            Long parentCoreId,
+            GoalAutoTransferCreateReq req
+    ) {
+        Long childCoreId = req.childCoreId();
+
+        // 1) 부모-자녀 관계 검증
+        boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(parentCoreId, childCoreId);
+        if (!isParent) {
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        }
+
+        // 2) 자녀 CoreUser 조회
+        CoreUser child = coreUserRepository.findById(childCoreId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+
+        // 3) 자녀 용돈 계좌(ALLOWANCE) 조회
+        Account allowance = accountRepository.findFirstByUserIdAndType(child.getId(), AccountType.ALLOWANCE)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND));
+
+        // 4) 자녀 활성 목표 계좌(GOAL, ACTIVE) 조회
+        Account goal = accountRepository.findFirstByUserIdAndTypeAndStatus(child.getId(), AccountType.GOAL, AccountStatus.ACTIVE)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND));
+
+        // 5) AutoTransfer 엔티티 생성
+        AutoTransfer transfer = AutoTransfer.builder()
+                .fromAccount(allowance)
+                .toAccount(goal)
+                .user(child)
+                .amount(req.amount())
+                .memo("GOAL: " + goal.getProductName())
                 .transferDay(req.transferDay())
                 .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
                 .status(AutoTransferStatus.PROCESSING)
@@ -128,6 +181,21 @@ public class AutoTransferServiceImpl implements AutoTransferService {
             // 3) 실행 성공 처리
             // (상태 + 다음 실행일) → REQUIRES_NEW 트랜잭션으로 별도 반영
             updateStatusAndNextDate(t, AutoTransferStatus.SUCCESS);
+
+            Account targetAccount = t.getToAccount();
+            if (targetAccount.getType().equals(AccountType.GOAL)) {
+                GoalDepositEventReq req = GoalDepositEventReq.builder()
+                        .accountNo(targetAccount.getNumber())
+                        .balanceAfter(targetAccount.getBalance())
+                        .build();
+
+                try {
+                    channelGoalClient.sendGoalDepositEvent(req);
+                } catch (Exception e) {
+                    log.error("목표 계좌 입금 이벤트 전송 실패. 계좌번호: {}", targetAccount.getNumber(), e);
+                }
+            }
+
 
         } catch (BusinessException e) {
 
