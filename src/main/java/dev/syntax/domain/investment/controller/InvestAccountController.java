@@ -35,7 +35,7 @@ public class InvestAccountController {
 
 
         // 초기 예수금 0으로 세팅 (필요 시 프론트에서 받을 수도 있음)
-        InvestAccount account = investAccountService.createInvestmentAccount(child.getId(), 0L);
+        InvestAccount account = investAccountService.createInvestmentAccount(child.getId(), 10000L);
 
         return AccountItemRes.builder()
                 .accountNumber(account.getCano())
