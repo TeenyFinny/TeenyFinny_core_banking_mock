@@ -31,7 +31,7 @@ public class StocksServiceImpl implements StocksService {
 
     @Override
     public MultiPriceRes getStocksForSell(Long userId) {
-        List<String> codes  = portfolioRepository.findProductCodesByCano(userId);
+        List<String> codes  = portfolioRepository.findProductCodesByUserId(userId);
 
         if (codes.isEmpty()) {
             return new MultiPriceRes(List.of());
