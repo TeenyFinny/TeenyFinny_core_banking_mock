@@ -34,9 +34,7 @@ public class StocksServiceImpl implements StocksService {
         List<String> codes  = portfolioRepository.findProductCodesByCano(userId);
 
         if (codes.isEmpty()) {
-            MultiPriceRes emptyRes = new MultiPriceRes();
-            emptyRes.setOutput(List.of());
-            return emptyRes;
+            return new MultiPriceRes(List.of());
         }
 
         // 2) KIS 멀티 시세 조회
