@@ -1,6 +1,7 @@
 package dev.syntax.domain.investment.controller;
 
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.service.AccountService;
 import dev.syntax.domain.investment.dto.AccountItemRes;
 import dev.syntax.domain.investment.entity.InvestAccount;
@@ -27,15 +28,20 @@ public class InvestAccountController {
      */
     @PostMapping("/investment")
     public AccountItemRes createInvestmentAccount(@RequestParam Long userId) {
-        // 자녀 CoreUser 조회
+        // 자녀 찾기
         CoreUser child = coreUserRepository.findByChannelUserId(userId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.CHILD_USER_NOT_FOUND));
-        // core_account 테이블에 추가
-        accountService.createInvestAccount(child);
 
+        // 1) 코어 계좌 생성 → 계좌번호 추출
+        Account coreAccount = accountService.createInvestAccount(child);
+        String cano = coreAccount.getNumber();
 
-        // 초기 예수금 0으로 세팅 (필요 시 프론트에서 받을 수도 있음)
-        InvestAccount account = investAccountService.createInvestmentAccount(child.getId(), 10000L);
+        // 2) 투자 계좌 저장 (depositAmount 기본값 10000L)
+        InvestAccount account = investAccountService.createInvestmentAccount(
+                child.getId(),
+                cano,
+                10000L
+        );
 
         return AccountItemRes.builder()
                 .accountNumber(account.getCano())
