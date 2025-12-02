@@ -3,6 +3,7 @@ package dev.syntax.domain.investment.service;
 import dev.syntax.domain.investment.dto.TopHoldingItem;
 import dev.syntax.domain.investment.dto.res.HoldingItemRes;
 import dev.syntax.domain.investment.dto.res.InvestPortfolioRes;
+import dev.syntax.domain.investment.dto.res.PortfolioDateRes;
 import dev.syntax.domain.investment.entity.InvestPortfolioMonthly;
 import dev.syntax.domain.investment.entity.InvestPortfolioMonthlySummary;
 import dev.syntax.domain.investment.repository.InvestPortfolioMonthlyRepository;
@@ -11,6 +12,7 @@ import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
 import dev.syntax.global.service.Utils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class MonthlyPortfolioService {
 
     private final InvestPortfolioMonthlyRepository monthlyRepo;
@@ -59,6 +62,10 @@ public class MonthlyPortfolioService {
                 holdings,
                 top
         );
+    }
+    
+    public List<PortfolioDateRes> getAvailableDates(String cano, Long userId) {
+        return summaryRepo.findAvailableDates(cano, userId);
     }
 
     private List<TopHoldingItem> buildTop(InvestPortfolioMonthlySummary summary) {
