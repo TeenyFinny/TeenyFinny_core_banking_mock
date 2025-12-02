@@ -39,8 +39,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public UserAccountListRes getUserAccounts(Long coreUserId) {
-        // 1. 본인 계좌 조회
+        // 1. 본인 계좌 조회 (GOAL 계좌는 ACTIVE 상태만 포함)
         List<AccountItemRes> myAccounts = accountRepository.findAllByUserId(coreUserId).stream()
+                .filter(this::shouldIncludeAccount)
                 .map(AccountItemRes::from)
                 .toList();
 
@@ -56,6 +57,7 @@ public class AccountServiceImpl implements AccountService {
         List<Account> allChildAccounts = accountRepository.findAllByUser_IdIn(childIds);
 
         Map<Long, List<AccountItemRes>> childAccountsByChildId = allChildAccounts.stream()
+                .filter(this::shouldIncludeAccount)
                 .collect(Collectors.groupingBy(
                         account -> account.getUser().getId(),
                         Collectors.mapping(AccountItemRes::from, Collectors.toList())
@@ -66,6 +68,22 @@ public class AccountServiceImpl implements AccountService {
                 .toList();
 
         return new UserAccountListRes(myAccounts, children);
+    }
+
+    /**
+     * 계좌를 응답에 포함할지 여부를 판단합니다.
+     * GOAL 타입 계좌의 경우, ACTIVE 상태인 경우에만 포함합니다.
+     *
+     * @param account Account 엔티티
+     * @return 포함 여부 (true: 포함, false: 제외)
+     */
+    private boolean shouldIncludeAccount(Account account) {
+        // GOAL 계좌가 아니면 항상 포함
+        if (account.getType() != AccountType.GOAL) {
+            return true;
+        }
+        // GOAL 계좌는 ACTIVE 상태일 때만 포함
+        return account.getStatus() == AccountStatus.ACTIVE;
     }
 
     @Transactional
