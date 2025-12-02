@@ -81,7 +81,7 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
                 .quantity(quantity)
                 .price(price)
                 .exchangeDivisionCode("KRX")  // excg_id_dvsn_cd, 필요시 파라미터로
-                .status(OrderStatus.REQUESTED)
+                .status(OrderStatus.EXECUTED)
                 .build();
 
         return investTradeOrderRepository.save(order);
@@ -115,7 +115,13 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
 
         // 2. 보유수량 감소
         portfolio.reduceHolding(quantity);
-        investPortfolioRepository.save(portfolio);
+
+        // 3. 보유수량이 0이면 삭제
+        if (portfolio.getHoldingQuantity() == 0) {
+            investPortfolioRepository.delete(portfolio);
+        } else {
+            investPortfolioRepository.save(portfolio); // 0이 아닐 때만 업데이트
+        }
 
         // 3. 예수금 증가 (매도 금액 만큼 dnca_tot_amt 증가)
         long revenue = quantity * price;
@@ -134,7 +140,7 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
                 .quantity(quantity)
                 .price(price)
                 .exchangeDivisionCode("KRX")
-                .status(OrderStatus.REQUESTED)
+                .status(OrderStatus.EXECUTED)
                 .build();
 
         return investTradeOrderRepository.save(order);
