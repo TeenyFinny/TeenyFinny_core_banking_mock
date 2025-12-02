@@ -24,7 +24,7 @@ public interface InvestPortfolioRepository extends JpaRepository<InvestPortfolio
     List<InvestPortfolio> findByCano_Cano(String cano);
 
     @Query("SELECT p.productCode FROM InvestPortfolio p WHERE p.userId = :userId")
-    List<String> findProductCodesByCano(Long userId);
+    List<String> findProductCodesByUserId(Long userId);
 
     @Query("SELECT p.holdingQuantity FROM InvestPortfolio p WHERE p.cano.cano = :cano AND p.productCode = :productCode")
     Optional<Long> findHoldingQuantity(String cano, String productCode);
