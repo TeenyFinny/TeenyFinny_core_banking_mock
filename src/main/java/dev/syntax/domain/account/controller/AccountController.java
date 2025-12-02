@@ -14,6 +14,8 @@ import dev.syntax.domain.account.entity.Account;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AccountController {
 
+    private static final Logger log = LoggerFactory.getLogger(AccountController.class);
     private final AccountService accountService;
     private final AutoTransferService autoTransferService;
 
@@ -36,6 +39,7 @@ public class AccountController {
             @PathVariable String number,
             @RequestBody AccountStatusUpdateReq req
     ) {
+        log.info("[Core 계좌 상태 변경]: accountNo: {} accountStatus: {}", number, req.status());
         return accountService.updateStatus(number, req.status());
     }
 

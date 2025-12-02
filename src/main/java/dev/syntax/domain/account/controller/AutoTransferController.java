@@ -8,6 +8,8 @@ import dev.syntax.domain.account.service.AutoTransferService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AutoTransferController {
 
+    private static final Logger log = LoggerFactory.getLogger(AutoTransferController.class);
     private final AutoTransferService autoTransferService;
 
     /**
@@ -51,6 +54,7 @@ public class AutoTransferController {
             @CurrentUserId Long userId,
             @PathVariable Long autoTransferId
     ) {
+        log.info("[Core 자동 이체 삭제] userId: {}, autoTransferId: {}", userId, autoTransferId);
         autoTransferService.deleteAutoTransfer(userId, autoTransferId);
     }
 
