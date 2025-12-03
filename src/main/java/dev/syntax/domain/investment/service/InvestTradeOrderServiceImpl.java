@@ -162,9 +162,10 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
                 .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND));
     }
 
-    @Transactional
-    public void syncShadowAccount(Long userId, InvestAccount investAccount) {
-        Account core = coreAccountRepository.findByUserIdWithPessimisticLock(userId, AccountType.INVESTMENT).get();
+    private void syncShadowAccount(Long userId, InvestAccount investAccount) {
+        Account core = coreAccountRepository
+                .findByUserIdWithPessimisticLock(userId, AccountType.INVESTMENT)
+                .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND));
         core.setBalance(BigDecimal.valueOf(investAccount.getDepositAmount()));
     }
 }
