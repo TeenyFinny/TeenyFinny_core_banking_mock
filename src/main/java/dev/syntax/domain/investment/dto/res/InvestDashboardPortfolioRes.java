@@ -5,6 +5,7 @@ import java.util.List;
 public record InvestDashboardPortfolioRes(
         Long userId,
         String depositAmount,
+        String totalAssetAmount,
         String totEvluAmt,
         String totalProfitAmount,
         String totalProfitRate,

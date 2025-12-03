@@ -58,6 +58,7 @@ public class InvestPortfolioServiceImpl implements InvestPortfolioService {
                     .totalEvaluationAmount(0L)
                     .totalProfitAmount(0L)
                     .totalProfitRate(0.0)
+                    .totalAssetAmount(account.getDepositAmount())
                     .holdings(Collections.emptyList())
                     .build();
         }
@@ -157,6 +158,9 @@ public class InvestPortfolioServiceImpl implements InvestPortfolioService {
                 })
                 .toList();
 
+        // 총 자산 = 예수금 + 총 평가금액
+        long totalAssetAmount = account.getDepositAmount() + totalEvalAmount.longValue();
+
         // 최종 계산 결과 전달
         return InvestPortfolioCalcResult.builder()
                 .userId(userId)
@@ -164,6 +168,7 @@ public class InvestPortfolioServiceImpl implements InvestPortfolioService {
                 .totalEvaluationAmount(totalEvalAmount.longValue())
                 .totalProfitAmount(totalProfit.longValue())
                 .totalProfitRate(totalProfitRate)
+                .totalAssetAmount(totalAssetAmount)
                 .holdings(updatedItems)
                 .build();
     }
@@ -227,6 +232,7 @@ public class InvestPortfolioServiceImpl implements InvestPortfolioService {
         return new InvestDashboardPortfolioRes(
                 calc.userId(),
                 Utils.NumberFormattingService(calc.depositAmount()),
+                Utils.NumberFormattingService(calc.totalAssetAmount()),
                 Utils.NumberFormattingService(calc.totalEvaluationAmount()),
                 Utils.NumberFormattingService(calc.totalProfitAmount()),
                 Utils.FormatToTwoDecimal(calc.totalProfitRate()),

@@ -10,6 +10,7 @@ public record InvestPortfolioCalcResult(
         String cano,
         Long userId,
         Long depositAmount,
+        Long totalAssetAmount,
         Long totalEvaluationAmount,
         Long totalProfitAmount,
         Double totalProfitRate,

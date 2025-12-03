@@ -21,10 +21,10 @@ public class InvestAccountService {
      * @return 생성된 투자계좌
      */
     @Transactional
-    public InvestAccount createInvestmentAccount(Long userId, Long initialDeposit) {
+    public InvestAccount createInvestmentAccount(Long userId, String cano, Long initialDeposit) {
 
         InvestAccount account = InvestAccount.builder()
-                .cano(AccountNumberGenerator.generate())
+                .cano(cano)
                 .userId(userId)
                 .depositAmount(initialDeposit)
                 .build();
