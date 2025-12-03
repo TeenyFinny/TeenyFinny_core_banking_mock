@@ -6,13 +6,15 @@ import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.dto.GoalAutoTransferCreateReq;
 import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.AutoTransfer;
+import dev.syntax.domain.account.enums.AutoTransferStatus;
 import dev.syntax.domain.account.util.AutoTransferDateCalculator;
-import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.exception.BusinessException;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 자동이체 관리 서비스
@@ -100,7 +102,7 @@ public interface AutoTransferService {
 
     UpdateAutoTransferDayRes updateAutoTransferDay(Long userId, Long autoTransferId, Integer payDay);
 
-     /**
+    /**
      * 자동이체를 삭제합니다.
      *
      * <p>
@@ -136,4 +138,50 @@ public interface AutoTransferService {
      * @see dev.syntax.domain.account.repository.AutoTransferRepository
      */
     void deleteAutoTransfer(Long userId, Long autoTransferId);
+
+	/**
+	 * 관리자용 전체 자동이체 조회 (페이징)
+	 */
+	Page<AutoTransfer> getAllAutoTransfers(
+		Pageable pageable
+	);
+
+	/**
+	 * 관리자용 상태별 자동이체 조회 (페이징)
+	 */
+	Page<AutoTransfer> getAutoTransfersByStatus(
+		AutoTransferStatus status,
+		Pageable pageable
+	);
+
+	/**
+	 * 관리자용 날짜 범위별 자동이체 조회 (페이징)
+	 */
+	Page<AutoTransfer> getAutoTransfersByDateRange(
+		LocalDate startDate,
+		LocalDate endDate,
+		Pageable pageable
+	);
+
+	/**
+	 * 관리자용 상태 및 날짜 범위별 자동이체 조회 (페이징)
+	 */
+
+	Page<AutoTransfer> getAutoTransfersByStatusAndDateRange(
+		AutoTransferStatus status,
+		LocalDate startDate,
+		LocalDate endDate,
+		Pageable pageable
+	);
+
+	/**
+	 * 관리자용 특정 자동이체 수동 실행
+	 * <p>
+	 * 자동이체를 즉시 실행합니다. 배치 스케줄러와 별개로 관리자가 수동으로 실행할 수 있습니다.
+	 * </p>
+	 */
+
+	void executeAutoTransferManually(Long autoTransferId);
+
 }
+

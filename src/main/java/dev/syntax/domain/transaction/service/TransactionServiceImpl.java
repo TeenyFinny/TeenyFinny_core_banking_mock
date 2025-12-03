@@ -99,7 +99,7 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal balance = account.getBalance();
 
         List<Transaction> transactions =
-                transactionRepository.findByNumberOrderByTransactionDateDesc(number);
+                transactionRepository.findByAccount_IdOrderByTransactionDateDesc(account.getId());
 
         List<TransactionItemRes> items = transactions.stream()
                 .map(t -> new TransactionItemRes(
