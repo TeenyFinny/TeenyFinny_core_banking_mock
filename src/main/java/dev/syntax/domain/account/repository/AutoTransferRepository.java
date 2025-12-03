@@ -13,30 +13,25 @@ import java.util.List;
 
 public interface AutoTransferRepository extends JpaRepository<AutoTransfer, Long> {
     List<AutoTransfer> findByNextTransferDay(LocalDate date);
-    
-    /**
-     * 상태별 자동이체 조회 (페이징)
-     */
-    Page<AutoTransfer> findByStatus(AutoTransferStatus status, Pageable pageable);
-    
-    /**
-     * 날짜 범위별 자동이체 조회 (페이징)
-     */
-    @Query("SELECT a FROM AutoTransfer a WHERE a.nextTransferDay BETWEEN :startDate AND :endDate")
-    Page<AutoTransfer> findByNextTransferDayBetween(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            Pageable pageable
-    );
-    
-    /**
-     * 상태와 날짜 범위로 자동이체 조회 (페이징)
-     */
-    @Query("SELECT a FROM AutoTransfer a WHERE a.status = :status AND a.nextTransferDay BETWEEN :startDate AND :endDate")
-    Page<AutoTransfer> findByStatusAndNextTransferDayBetween(
-            @Param("status") AutoTransferStatus status,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            Pageable pageable
-    );
+
+	@Query(value = "SELECT a FROM AutoTransfer a JOIN FETCH a.user JOIN FETCH a.fromAccount JOIN FETCH a.toAccount WHERE a.status = :status",
+		countQuery = "SELECT count(a) FROM AutoTransfer a WHERE a.status = :status")
+	Page<AutoTransfer> findByStatus(@Param("status") AutoTransferStatus status, Pageable pageable);
+
+	@Query(value = "SELECT a FROM AutoTransfer a JOIN FETCH a.user JOIN FETCH a.fromAccount JOIN FETCH a.toAccount WHERE a.nextTransferDay BETWEEN :startDate AND :endDate",
+		countQuery = "SELECT count(a) FROM AutoTransfer a WHERE a.nextTransferDay BETWEEN :startDate AND :endDate")
+	Page<AutoTransfer> findByNextTransferDayBetween(
+		@Param("startDate") LocalDate startDate,
+		@Param("endDate") LocalDate endDate,
+		Pageable pageable
+	);
+
+	@Query(value = "SELECT a FROM AutoTransfer a JOIN FETCH a.user JOIN FETCH a.fromAccount JOIN FETCH a.toAccount WHERE a.status = :status AND a.nextTransferDay BETWEEN :startDate AND :endDate",
+		countQuery = "SELECT count(a) FROM AutoTransfer a WHERE a.status = :status AND a.nextTransferDay BETWEEN :startDate AND :endDate")
+	Page<AutoTransfer> findByStatusAndNextTransferDayBetween(
+		@Param("status") AutoTransferStatus status,
+		@Param("startDate") LocalDate startDate,
+		@Param("endDate") LocalDate endDate,
+		Pageable pageable
+	);
 }

@@ -28,19 +28,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
 
-    /**
-     * 실패한 거래 조회 (페이징)
-     */
-    Page<Transaction> findByStatus(TransactionStatus status, Pageable pageable);
+	@Query(value = "SELECT t FROM Transaction t JOIN FETCH t.user JOIN FETCH t.account WHERE t.status = :status",
+		countQuery = "SELECT count(t) FROM Transaction t WHERE t.status = :status")
+	Page<Transaction> findByStatus(@Param("status") TransactionStatus status, Pageable pageable);
 
-    /**
-     * 자동이체 관련 실패 거래 조회 (페이징)
-     * code에 "AUTO"가 포함된 거래만 조회
-     */
-    @Query("SELECT t FROM Transaction t WHERE t.status = :status AND t.code LIKE %:codePattern%")
-    Page<Transaction> findByStatusAndCodeContaining(
-            @Param("status") TransactionStatus status,
-            @Param("codePattern") String codePattern,
-            Pageable pageable
-    );
+	@Query(value = "SELECT t FROM Transaction t JOIN FETCH t.user JOIN FETCH t.account WHERE t.status = :status AND t.code LIKE %:codePattern%",
+		countQuery = "SELECT count(t) FROM Transaction t WHERE t.status = :status AND t.code LIKE %:codePattern%")
+	Page<Transaction> findByStatusAndCodeContaining(
+		@Param("status") TransactionStatus status,
+		@Param("codePattern") String codePattern,
+		Pageable pageable
+	);
 }
