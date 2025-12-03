@@ -28,7 +28,6 @@ import lombok.Setter;
 @Entity
 @Table(name = "core_account")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -97,5 +96,9 @@ public class Account extends BaseTimeEntity {
 
     public void updateStatus(AccountStatus status) {
         this.status = status;
+    }
+
+    public void syncBalance(BigDecimal newBalance) {
+        this.balance = newBalance;
     }
 }

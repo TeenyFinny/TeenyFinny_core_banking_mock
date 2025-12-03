@@ -166,6 +166,6 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
         Account core = coreAccountRepository
                 .findByUserIdWithPessimisticLock(userId, AccountType.INVESTMENT)
                 .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND));
-        core.setBalance(BigDecimal.valueOf(investAccount.getDepositAmount()));
+        core.syncBalance(BigDecimal.valueOf(investAccount.getDepositAmount()));
     }
 }
