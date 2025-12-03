@@ -6,6 +6,7 @@ import jakarta.persistence.QueryHint;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 
 public interface InvestAccountRepository extends JpaRepository<InvestAccount, String> {
@@ -14,6 +15,11 @@ public interface InvestAccountRepository extends JpaRepository<InvestAccount, St
 
     // [락 X] - getPortfolio 등 읽기 전용 트랜잭션에서 사용 (추가 필요)
     Optional<InvestAccount> findByCano(String cano);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"))
+    @Query("SELECT a FROM InvestAccount a WHERE a.cano = :cano")
+    Optional<InvestAccount> findWithLockByCano(String cano);
 
     boolean existsByUserId(Long userId);
 }

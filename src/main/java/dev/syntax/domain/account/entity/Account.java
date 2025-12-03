@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.Setter;
 
 /**
  * 계좌 엔티티
@@ -27,6 +28,7 @@ import java.util.List;
 @Entity
 @Table(name = "core_account")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
