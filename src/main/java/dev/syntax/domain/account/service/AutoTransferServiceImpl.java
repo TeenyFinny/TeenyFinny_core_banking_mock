@@ -26,6 +26,8 @@ import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -367,5 +369,4 @@ public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, 
 
         autoTransferRepository.delete(autoTransfer);
     }
-
 }
