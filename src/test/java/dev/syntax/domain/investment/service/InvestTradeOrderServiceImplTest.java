@@ -1,5 +1,14 @@
 package dev.syntax.domain.investment.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.times;
+import static org.mockito.BDDMockito.verify;
+
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.repository.AccountRepository;
@@ -12,19 +21,15 @@ import dev.syntax.domain.investment.repository.InvestPortfolioRepository;
 import dev.syntax.domain.investment.repository.InvestTradeOrderRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
-
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.math.BigDecimal;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class InvestTradeOrderServiceImplTest {
@@ -49,7 +54,7 @@ class InvestTradeOrderServiceImplTest {
     // =====================================================================================
 
     @Test
-    @DisplayName("FAIL - 계좌가 존재하지 않으면 ACCOUNT_NOT_FOUND 예외 발생")
+    @DisplayName("FAIL - 계좌가 존재하지 않으면 ACCOUNT_NOT_FOUND 예외 발생한다")
     void getAccount_fail_accountNotFound() {
         // given
         given(investAccountRepository.findWithLockByCano("12345678"))
@@ -64,7 +69,7 @@ class InvestTradeOrderServiceImplTest {
     }
 
     @Test
-    @DisplayName("FAIL - 계좌는 있으나 userId 불일치 시 ACCOUNT_NOT_FOUND 예외 발생")
+    @DisplayName("FAIL - 계좌는 있으나 userId 불일치 시 ACCOUNT_NOT_FOUND 예외 발생한다")
     void getAccount_fail_userIdMismatch() {
         // given
         InvestAccount wrongUserAccount = InvestAccount.builder()
@@ -138,7 +143,7 @@ class InvestTradeOrderServiceImplTest {
     // 매수 FAIL - 예수금 부족
     // =====================================================================================
     @Test
-    @DisplayName("FAIL - 매수: 예수금 부족 시 주문 실패(INSUFFICIENT_BALANCE)")
+    @DisplayName("FAIL - 매수: 예수금 부족 시 주문이 실패한다(INSUFFICIENT_BALANCE)")
     void buy_fail_insufficientBalance() {
         // given
         InvestAccount account = InvestAccount.builder()
@@ -213,7 +218,7 @@ class InvestTradeOrderServiceImplTest {
     // 매도 FAIL - 보유수량 초과 매도
     // =====================================================================================
     @Test
-    @DisplayName("FAIL - 보유량 초과 매도 시 에러 발생(INSUFFICIENT_HOLDING)")
+    @DisplayName("FAIL - 보유량 초과 매도 시 에러가 발생한다.(INSUFFICIENT_HOLDING)")
     void sell_fail_insufficientHolding() {
         // given
         InvestAccount account = InvestAccount.builder()
@@ -243,5 +248,53 @@ class InvestTradeOrderServiceImplTest {
                 tradeService.sell("12345678", 1L, "005930", "삼성전자", 20, 50000))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorInvestmentCode.INSUFFICIENT_HOLDING.getMessage());
+    }
+
+    // =====================================================================================
+    // 매도 - 보유수량이 0이면 포트폴리오 삭제
+    // =====================================================================================
+    @Test
+    @DisplayName("SUCCESS - 매도 후 보유수량이 0이면 포트폴리오 삭제(delete)된다")
+    void sell_portfolioDeletedWhenQuantityZero() {
+        // given
+        InvestAccount account = InvestAccount.builder()
+                .cano("12345678")
+                .userId(1L)
+                .depositAmount(10000L)
+                .build();
+
+        given(investAccountRepository.findWithLockByCano("12345678"))
+                .willReturn(Optional.of(account));
+
+        // 현재 보유수량 = 5주
+        InvestPortfolio portfolio = InvestPortfolio.builder()
+                .cano(account)
+                .userId(1L)
+                .productCode("005930")
+                .productName("삼성전자")
+                .holdingQuantity(5L)
+                .purchaseAvgPrice(50000L)
+                .build();
+
+        given(portfolioRepository.findByCano_CanoAndProductCode("12345678", "005930"))
+                .willReturn(Optional.of(portfolio));
+
+        // shadow account
+        Account core = Account.builder()
+                .type(AccountType.INVESTMENT)
+                .balance(BigDecimal.ZERO)
+                .build();
+        given(coreAccountRepository.findByUserIdWithPessimisticLock(1L, AccountType.INVESTMENT))
+                .willReturn(Optional.of(core));
+
+        given(orderRepository.save(any(TradeOrder.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        // when - 5주 모두 매도 → 보유수량 = 0
+        tradeService.sell("12345678", 1L, "005930", "삼성전자", 5, 50000);
+
+        // then
+        verify(portfolioRepository, times(1)).delete(portfolio);  // 삭제됐는지 확인
+        verify(portfolioRepository, never()).save(any());         // save()는 호출되면 안됨
     }
 }
