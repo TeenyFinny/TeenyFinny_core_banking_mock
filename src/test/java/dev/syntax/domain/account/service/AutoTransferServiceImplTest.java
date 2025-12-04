@@ -2,6 +2,7 @@ package dev.syntax.domain.account.service;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
@@ -12,6 +13,7 @@ import dev.syntax.domain.account.enums.AutoTransferStatus;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.repository.AutoTransferRepository;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
@@ -43,6 +45,9 @@ class AutoTransferServiceImplTest {
     @Mock
     private CoreUserRepository coreUserRepository;
 
+    @Mock
+    private CoreUserRelationshipRepository coreUserRelationshipRepository;
+
     // =========================================================================================
     // SUCCESS: 자동이체 생성
     // =========================================================================================
@@ -69,6 +74,8 @@ class AutoTransferServiceImplTest {
         when(accountRepository.findById(1L)).thenReturn(Optional.of(from));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(to));
         when(coreUserRepository.findByChannelUserId(5L)).thenReturn(Optional.of(user));
+        when(coreUserRelationshipRepository.existsByParent_IdAndChild_Id(anyLong(), anyLong()))
+                .thenReturn(true);
 
         // save() 호출 시 AutoTransfer 엔티티를 그대로 반환하도록 stubbing
         when(autoTransferRepository.save(any(AutoTransfer.class)))
@@ -162,6 +169,8 @@ class AutoTransferServiceImplTest {
 
         when(coreUserRepository.findById(userId)).thenReturn(Optional.of(user));
         when(autoTransferRepository.findById(transferId)).thenReturn(Optional.of(transfer));
+        when(coreUserRelationshipRepository.existsByParent_IdAndChild_Id(anyLong(), anyLong()))
+                .thenReturn(true);
 
         autoTransferService.deleteAutoTransfer(userId, transferId);
 

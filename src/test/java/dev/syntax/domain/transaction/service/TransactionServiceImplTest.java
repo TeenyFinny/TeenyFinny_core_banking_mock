@@ -7,6 +7,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.repository.AccountRepository;
@@ -15,6 +17,7 @@ import dev.syntax.domain.transaction.dto.TransactionAllowanceItemRes;
 import dev.syntax.domain.transaction.entity.Transaction;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.repository.TransactionRepository;
+import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import java.math.BigDecimal;
@@ -31,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-class TransactionServicePeriodTest {
+class TransactionServiceImplTest {
 
     @InjectMocks
     private TransactionServiceImpl transactionService;
@@ -54,9 +57,15 @@ class TransactionServicePeriodTest {
         LocalDate start = LocalDate.of(2025, 1, 1);
         LocalDate end = LocalDate.of(2025, 1, 31);
 
+        // 계좌 소유 사용자 (필수)
+        CoreUser owner = CoreUser.builder()
+                .id(1L)        // requesterId = 1L 과 동일하게 설정하면 바로 권한 통과
+                .build();
+
         Account account = Account.builder()
                 .number(number)
                 .balance(new BigDecimal("50000"))
+                .user(owner)
                 .build();
         // ID 세팅
         ReflectionTestUtils.setField(account, "id", 10L);
@@ -92,7 +101,7 @@ class TransactionServicePeriodTest {
 
         // when
         TransactionAllowanceHistoryRes res =
-                transactionService.getHistoryByPeriod(number, start, end);
+                transactionService.getHistoryByPeriod(1L, number, start, end);
 
         // then
         assertThat(res).isNotNull();
@@ -125,7 +134,7 @@ class TransactionServicePeriodTest {
 
         // when & then
         assertThatThrownBy(() ->
-                transactionService.getHistoryByPeriod(number, LocalDate.now(), LocalDate.now()))
+                transactionService.getHistoryByPeriod(1L, number, LocalDate.now(), LocalDate.now()))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorBaseCode.NOT_FOUND_ENTITY.getMessage());
 
@@ -142,9 +151,15 @@ class TransactionServicePeriodTest {
         // given
         String number = "123-123";
 
+        // 계좌 소유 사용자 (필수)
+        CoreUser owner = CoreUser.builder()
+                .id(1L)        // requesterId = 1L 과 동일하게 설정하면 바로 권한 통과
+                .build();
+
         Account account = Account.builder()
                 .number(number)
                 .balance(new BigDecimal("10000"))
+                .user(owner)
                 .build();
         ReflectionTestUtils.setField(account, "id", 10L);
 
@@ -156,7 +171,7 @@ class TransactionServicePeriodTest {
 
         // when
         TransactionAllowanceHistoryRes res =
-                transactionService.getHistoryByPeriod(number, LocalDate.now(), LocalDate.now());
+                transactionService.getHistoryByPeriod(1L, number, LocalDate.now(), LocalDate.now());
 
         // then
         assertThat(res.transactions()).isEmpty();
