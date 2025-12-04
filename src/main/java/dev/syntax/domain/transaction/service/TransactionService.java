@@ -59,7 +59,7 @@ public interface TransactionService {
      * @param number 계좌번호
      * @return 잔액 + 거래내역 전체 리스트
      */
-    TransactionHistoryRes getHistory(String number);
+    TransactionHistoryRes getHistory(Long userId, String number);
 
     /**
      * 특정 계좌의 거래내역을 기간별로 필터링하여 조회합니다.
@@ -69,7 +69,7 @@ public interface TransactionService {
      * @param endDate 조회 종료일
      * @return 잔액 + 거래내역 리스트 (필터링된)
      */
-    TransactionAllowanceHistoryRes getHistoryByPeriod(String number, LocalDate startDate, LocalDate endDate);
+    TransactionAllowanceHistoryRes getHistoryByPeriod(Long userId, String number, LocalDate startDate, LocalDate endDate);
 
     /**
      * 특정 거래의 상세 정보를 조회합니다.
@@ -81,5 +81,5 @@ public interface TransactionService {
      * @param transactionId 거래 ID
      * @return 거래 상세 정보
      */
-    TransactionDetailItemRes getTransactionDetail(Long transactionId);
+    TransactionDetailItemRes getTransactionDetail(Long transactionId, Long userId);
 }
