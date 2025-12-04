@@ -39,8 +39,7 @@ class InvestAccountServiceTest {
                 .depositAmount(initialDeposit)
                 .build();
 
-        ReflectionTestUtils.setField(saved, "id", 10L);
-
+        // id 세팅 필요 없음 (cano가 PK)
         given(investAccountRepository.save(any(InvestAccount.class)))
                 .willReturn(saved);
 
@@ -52,13 +51,10 @@ class InvestAccountServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getUserId()).isEqualTo(userId);
         assertThat(result.getCano()).isEqualTo(cano);
-
-        //  예수금 초기 금액 검증
-        assertThat(result.getDepositAmount()).isEqualTo(10000L);
+        assertThat(result.getDepositAmount()).isEqualTo(10000L);  // 예수금 검증
 
         verify(investAccountRepository).save(any(InvestAccount.class));
     }
-
     // ============================================================================
     // FAIL: 예수금 초기화 실패 테스트
     // ============================================================================
@@ -69,14 +65,12 @@ class InvestAccountServiceTest {
         Long userId = 1L;
         String cano = "123-123";
 
-        // 잘못된 초기 예수금으로 저장된 경우 (예: 0원)
+        // 잘못된 초기 예수금으로 저장된 경우
         InvestAccount saved = InvestAccount.builder()
                 .cano(cano)
                 .userId(userId)
-                .depositAmount(0L) //  잘못된 값
+                .depositAmount(0L)
                 .build();
-
-        ReflectionTestUtils.setField(saved, "id", 11L);
 
         given(investAccountRepository.save(any(InvestAccount.class)))
                 .willReturn(saved);
@@ -86,7 +80,6 @@ class InvestAccountServiceTest {
                 investAccountService.createInvestmentAccount(userId, cano, 10000L);
 
         // then
-        //  예수금 초기화 실패 검증
         assertThat(result.getDepositAmount()).isNotEqualTo(10000L);
         assertThat(result.getDepositAmount()).isEqualTo(0L);
     }
