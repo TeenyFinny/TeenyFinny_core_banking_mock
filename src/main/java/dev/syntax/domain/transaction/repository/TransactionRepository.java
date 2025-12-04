@@ -1,6 +1,9 @@
 package dev.syntax.domain.transaction.repository;
 
 import dev.syntax.domain.transaction.entity.Transaction;
+import dev.syntax.domain.transaction.enums.TransactionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,4 +27,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("accountId") Long accountId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+	@Query(value = "SELECT t FROM Transaction t JOIN FETCH t.user JOIN FETCH t.account WHERE t.status = :status",
+		countQuery = "SELECT count(t) FROM Transaction t WHERE t.status = :status")
+	Page<Transaction> findByStatus(@Param("status") TransactionStatus status, Pageable pageable);
+
+	@Query(value = "SELECT t FROM Transaction t JOIN FETCH t.user JOIN FETCH t.account WHERE t.status = :status AND t.code LIKE %:codePattern%",
+		countQuery = "SELECT count(t) FROM Transaction t WHERE t.status = :status AND t.code LIKE %:codePattern%")
+	Page<Transaction> findByStatusAndCodeContaining(
+		@Param("status") TransactionStatus status,
+		@Param("codePattern") String codePattern,
+		Pageable pageable
+	);
 }

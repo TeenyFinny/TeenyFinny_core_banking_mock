@@ -6,6 +6,7 @@ import dev.syntax.domain.transaction.dto.TransactionHistoryDetailRes;
 import dev.syntax.domain.transaction.dto.TransactionHistoryRes;
 import dev.syntax.domain.transaction.entity.Transaction;
 import dev.syntax.domain.transaction.service.TransactionService;
+import dev.syntax.global.auth.annotation.CurrentUserId;
 import dev.syntax.global.response.ApiResponseUtil;
 import dev.syntax.global.response.BaseResponse;
 import dev.syntax.global.response.SuccessCode;
@@ -50,9 +51,10 @@ public class TransactionController {
      */
     @GetMapping("/account/{number}")
     public TransactionHistoryRes getAccountTransactions(
+            @CurrentUserId Long userId,
             @PathVariable String number
     ) {
-        return transactionService.getHistory(number);
+        return transactionService.getHistory(userId,number);
     }
 
     /**
@@ -65,11 +67,12 @@ public class TransactionController {
      */
     @GetMapping("/account/{number}/period")
     public TransactionAllowanceHistoryRes getAccountTransactionsByPeriod(
+            @CurrentUserId Long userId,
             @PathVariable String number,
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate
     ) {
-        return transactionService.getHistoryByPeriod(number, startDate, endDate);
+        return transactionService.getHistoryByPeriod(userId,number, startDate, endDate);
     }
 
     /**
@@ -84,8 +87,9 @@ public class TransactionController {
      */
     @GetMapping("/detail/{transactionId}")
     public TransactionDetailItemRes getTransactionDetail(
+            @CurrentUserId Long userId,
             @PathVariable Long transactionId
     ) {
-        return transactionService.getTransactionDetail(transactionId);
+        return transactionService.getTransactionDetail(transactionId, userId);
     }
 }

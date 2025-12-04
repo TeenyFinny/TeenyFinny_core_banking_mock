@@ -7,10 +7,8 @@ import dev.syntax.domain.account.dto.GoalAutoTransferCreateReq;
 import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.util.AutoTransferDateCalculator;
-import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.exception.BusinessException;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -100,7 +98,7 @@ public interface AutoTransferService {
 
     UpdateAutoTransferDayRes updateAutoTransferDay(Long userId, Long autoTransferId, Integer payDay);
 
-     /**
+    /**
      * 자동이체를 삭제합니다.
      *
      * <p>
@@ -137,3 +135,4 @@ public interface AutoTransferService {
      */
     void deleteAutoTransfer(Long userId, Long autoTransferId);
 }
+
