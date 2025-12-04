@@ -45,6 +45,46 @@ class InvestTradeOrderServiceImplTest {
     private AccountRepository coreAccountRepository;
 
     // =====================================================================================
+    // getAccount() FAIL 케이스 통합
+    // =====================================================================================
+
+    @Test
+    @DisplayName("FAIL - 계좌가 존재하지 않으면 ACCOUNT_NOT_FOUND 예외 발생")
+    void getAccount_fail_accountNotFound() {
+        // given
+        given(investAccountRepository.findWithLockByCano("12345678"))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() ->
+                tradeService.buy("12345678", 1L, "005930", "삼성전자", 1, 70000)
+        )
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorInvestmentCode.ACCOUNT_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("FAIL - 계좌는 있으나 userId 불일치 시 ACCOUNT_NOT_FOUND 예외 발생")
+    void getAccount_fail_userIdMismatch() {
+        // given
+        InvestAccount wrongUserAccount = InvestAccount.builder()
+                .cano("12345678")
+                .userId(999L) // userId 다름
+                .depositAmount(100000L)
+                .build();
+
+        given(investAccountRepository.findWithLockByCano("12345678"))
+                .willReturn(Optional.of(wrongUserAccount));
+
+        // when & then
+        assertThatThrownBy(() ->
+                tradeService.buy("12345678", 1L, "005930", "삼성전자", 1, 70000)
+        )
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorInvestmentCode.ACCOUNT_NOT_FOUND.getMessage());
+    }
+
+    // =====================================================================================
     // 매수(BUY) 성공 - 예수금 충분할 때 EXECUTED 주문 생성
     // =====================================================================================
     @Test
