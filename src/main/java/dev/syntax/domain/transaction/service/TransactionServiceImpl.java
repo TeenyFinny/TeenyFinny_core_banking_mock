@@ -14,7 +14,9 @@ import dev.syntax.domain.transaction.enums.TransactionStatus;
 import dev.syntax.domain.transaction.enums.TransactionType;
 import dev.syntax.domain.transaction.repository.TransactionRepository;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import dev.syntax.global.exception.BusinessException;
+import dev.syntax.global.response.error.ErrorAuthCode;
 import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
+    private final CoreUserRelationshipRepository coreUserRelationshipRepository;
 
     /**
      * 거래 내역을 기록합니다.
@@ -91,16 +94,20 @@ public class TransactionServiceImpl implements TransactionService {
      */
     @Override
     @Transactional(readOnly = true)
-    public TransactionHistoryRes getHistory(String number) {
+    public TransactionHistoryRes getHistory(Long userId, String number) {
+        log.info("[거래내역 조회 요청] userId={}, accountNo={}", userId, number);
 
         Account account = accountRepository.findByNumber(number)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
+
+        validateAccountAccess(userId, account.getUser().getId());
 
         BigDecimal balance = account.getBalance();
 
         List<Transaction> transactions =
                 transactionRepository.findByAccount_IdOrderByTransactionDateDesc(account.getId());
-
+        log.info("[거래조회 완료] totalCount={}", transactions.size());
+        
         List<TransactionItemRes> items = transactions.stream()
                 .map(t -> new TransactionItemRes(
                         t.getId(),
@@ -111,6 +118,8 @@ public class TransactionServiceImpl implements TransactionService {
                 ))
                 .toList();
 
+        log.info("[거래내역 응답 완료] userId={}, accountNo={}, 반환건수={}", 
+                userId, number, items.size());
         return new TransactionHistoryRes(items, balance);
     }
 
@@ -129,9 +138,13 @@ public class TransactionServiceImpl implements TransactionService {
      */
     @Override
     @Transactional(readOnly = true)
-    public TransactionAllowanceHistoryRes getHistoryByPeriod(String number, LocalDate startDate, LocalDate endDate) {
+    public TransactionAllowanceHistoryRes getHistoryByPeriod(Long userId, String number, LocalDate startDate, LocalDate endDate) {
         Account account = accountRepository.findByNumber(number)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
+        
+
+        // 🔥 권한 검증 추가
+        validateAccountAccess(userId, account.getUser().getId());
         
         BigDecimal balance = account.getBalance();
 
@@ -186,12 +199,16 @@ public class TransactionServiceImpl implements TransactionService {
      */
     @Override
     @Transactional(readOnly = true)
-    public TransactionDetailItemRes getTransactionDetail(Long transactionId) {
+    public TransactionDetailItemRes getTransactionDetail(Long transactionId, Long userId) {
         log.info("=== getTransactionDetail 호출됨 ===");
         log.info("전달받은 transactionId: {}", transactionId);
 
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.NOT_FOUND_ENTITY));
+
+        if (!transaction.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        }
 
         // 금액 포맷팅 (쉼표 구분)
         java.text.DecimalFormat decimalFormat = new java.text.DecimalFormat("#,###");
@@ -220,4 +237,24 @@ public class TransactionServiceImpl implements TransactionService {
 
         return response;
     }
+
+    /**
+ * 계좌 조회 권한 검증
+ * 부모는 자녀 계좌만 조회 가능
+ * 자녀는 자신의 계좌만 조회 가능
+ */
+private void validateAccountAccess(Long requesterId, Long accountOwnerId) {
+    if (requesterId.equals(accountOwnerId)) {
+        // 자녀가 자신의 계좌를 조회하는 경우 - OK
+        return;
+    }
+
+    // 부모인지 확인
+    boolean isParent = coreUserRelationshipRepository.existsByParent_IdAndChild_Id(requesterId, accountOwnerId);
+
+    if (!isParent) {
+        log.warn("[접근 거부] requesterId={}, accountOwnerId={}", requesterId, accountOwnerId);
+        throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+    }
+}
 }
