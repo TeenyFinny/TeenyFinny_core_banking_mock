@@ -221,7 +221,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
      * 자동이체 실패가 반복 실행되는 문제를 방지하는 핵심 포인트입니다.</p>
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void updateStatusAndNextDate(AutoTransfer t, AutoTransferStatus status) {
+    public void updateStatusAndNextDate(AutoTransfer t, AutoTransferStatus status) {
 
         // 상태 변경 (SUCCESS / FAIL)
         t.setStatus(status);
