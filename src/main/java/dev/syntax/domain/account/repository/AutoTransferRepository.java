@@ -4,12 +4,15 @@ import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.enums.AutoTransferStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import dev.syntax.domain.account.enums.AccountType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface AutoTransferRepository extends JpaRepository<AutoTransfer, Long> {
     List<AutoTransfer> findByNextTransferDay(LocalDate date);
@@ -34,4 +37,6 @@ public interface AutoTransferRepository extends JpaRepository<AutoTransfer, Long
 		@Param("endDate") LocalDate endDate,
 		Pageable pageable
 	);
+    Optional<AutoTransfer> findFirstByUserId(Long userId);
+    boolean existsByUserIdAndToAccount_Type(Long userId, AccountType type);
 }
