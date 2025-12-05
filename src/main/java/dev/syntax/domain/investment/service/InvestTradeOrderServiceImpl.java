@@ -44,6 +44,7 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
             long quantity,         // ord_qty (BIGINT)
             long price            // ord_unpr (BIGINT)
     ) {
+        validateOrder(quantity, price);
         InvestAccount account = getAccount(cano, userId);
 
         long totalCost = quantity * price; // 주문 금액 = 수량 * 단가
@@ -108,6 +109,8 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
             long quantity,
             long price
     ) {
+        validateOrder(quantity, price);
+
         InvestAccount account = getAccount(cano, userId);
 
         // 1. 포트폴리오 존재/보유수량 확인
@@ -154,6 +157,14 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
     }
 
     /**
+     * 새로운 주문 입력 검증
+     */
+    private void validateOrder(long quantity, long price) {
+        if (quantity <= 0 || price <= 0) {
+            throw new BusinessException(ErrorInvestmentCode.INVALID_ORDER);
+        }
+    }
+    /**
      * 계좌 존재 여부 + user_id 검증
      */
     private InvestAccount getAccount(String cano, Long userId) {
@@ -162,6 +173,9 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
                 .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND));
     }
 
+    /**
+     * core_account의 balance(잔액)과 동기화
+     */
     private void syncShadowAccount(Long userId, InvestAccount investAccount) {
         Account core = coreAccountRepository
                 .findByUserIdWithPessimisticLock(userId, AccountType.INVESTMENT)
