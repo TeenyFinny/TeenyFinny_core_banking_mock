@@ -297,4 +297,14 @@ class InvestTradeOrderServiceImplTest {
         verify(portfolioRepository, times(1)).delete(portfolio);  // 삭제됐는지 확인
         verify(portfolioRepository, never()).save(any());         // save()는 호출되면 안됨
     }
+
+    @Test
+    @DisplayName("price가 0 이하이면 INVALID_ORDER 예외가 발생해야 한다")
+    void buy_fail_priceLessThanOrZero_beforeFix() {
+        assertThatThrownBy(() ->
+                tradeService.buy("12345678", 1L, "005930", "삼성전자", 10, 0)
+        )
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorInvestmentCode.INVALID_ORDER.getMessage());
+    }
 }
