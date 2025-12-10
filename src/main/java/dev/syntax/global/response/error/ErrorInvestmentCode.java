@@ -42,6 +42,7 @@ public enum ErrorInvestmentCode implements ErrorBaseCodeForErrorCode{
      */
     ORDER_ALREADY_EXECUTED(HttpStatus.CONFLICT, "이미 체결된 주문입니다.", "ORD05"),
     ORDER_ALREADY_CANCELLED(HttpStatus.CONFLICT, "이미 취소된 주문입니다.", "ORD06"),
+    INVALID_ORDER(HttpStatus.CONFLICT, "잘못된 주문입니다.", "ORD07"),
 
     /**
      * 429 TOO MANY REQUESTS - 외부 API 제한

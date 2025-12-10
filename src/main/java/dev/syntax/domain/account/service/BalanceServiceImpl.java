@@ -1,7 +1,10 @@
 package dev.syntax.domain.account.service;
 
 import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.repository.AccountRepository;
+import dev.syntax.domain.investment.entity.InvestAccount;
+import dev.syntax.domain.investment.repository.InvestAccountRepository;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.transaction.enums.TransactionStatus;
@@ -31,6 +34,7 @@ public class BalanceServiceImpl implements BalanceService {
 
     private final AccountRepository accountRepository;
     private final TransactionService transactionService;
+    private final InvestAccountRepository investAccountRepository;
 
     /**
      * 계좌에 입금을 처리합니다.
@@ -54,9 +58,19 @@ public class BalanceServiceImpl implements BalanceService {
         Account account = accountRepository.findByIdWithPessimisticLock(accountId)
                 .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
 
-        // 잔액 증가
-        account.incrementBalance(amount);
-        accountRepository.save(account);
+
+        // 투자 계좌인 경우 비관적 락을 사용하여 InvestAccount 조회 후 입금
+        if (account.getType() == AccountType.INVESTMENT) {
+            InvestAccount investAccount = investAccountRepository.findWithLockByCano(account.getNumber())
+                    .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
+            investAccount.deposit(amount.longValue()); // 예수금 증가 (변경 감지로 자동 저장)
+
+            // core_account 테이블에도 동일하게 입금 처리
+            account.syncBalance(new BigDecimal(investAccount.getDepositAmount()));
+        } else { // 투자 계좌가 아닌 경우 core_account 테이블에 입금 처리
+            account.incrementBalance(amount);
+        }
+        // JPA 변경 감지로 트랜잭션 커밋 시 자동 저장됨
 
         // 거래내역 기록
         transactionService.record(
@@ -101,9 +115,18 @@ public class BalanceServiceImpl implements BalanceService {
             throw new BusinessException(ErrorBaseCode.ACCOUNT_BALANCE_NOT_ENOUGH);
         }
 
-        // 잔액 감소
-        account.decrementBalance(amount);
-        accountRepository.save(account);
+        // 투자 계좌인 경우 비관적 락을 사용하여 InvestAccount 조회 후 출금
+        if (account.getType() == AccountType.INVESTMENT) {
+            InvestAccount investAccount = investAccountRepository.findWithLockByCano(account.getNumber())
+                    .orElseThrow(() -> new BusinessException(ErrorBaseCode.ACCOUNT_NOT_FOUND));
+            investAccount.withdraw(amount.longValue()); // 예수금 감소 (변경 감지로 자동 저장)
+
+            // core_account 테이블에도 동일하게 출금 처리
+            account.syncBalance(new BigDecimal(investAccount.getDepositAmount()));
+        } else { // 투자 계좌가 아닌 경우 core_account 테이블에서 출금 처리
+            account.decrementBalance(amount);
+        }
+        // JPA 변경 감지로 트랜잭션 커밋 시 자동 저장됨
 
         // 거래내역 남기기
         transactionService.record(

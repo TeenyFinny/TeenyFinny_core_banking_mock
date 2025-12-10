@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 
 public interface InvestPortfolioRepository extends JpaRepository<InvestPortfolio, Long> {
@@ -21,4 +22,11 @@ public interface InvestPortfolioRepository extends JpaRepository<InvestPortfolio
     Optional<InvestPortfolio> findByCano_CanoAndProductCode(String cano, String productCode);
 
     List<InvestPortfolio> findByCano_Cano(String cano);
+
+    @Query("SELECT p.productCode FROM InvestPortfolio p WHERE p.userId = :userId")
+    List<String> findProductCodesByUserId(Long userId);
+
+    @Query("SELECT p.holdingQuantity FROM InvestPortfolio p WHERE p.cano.cano = :cano AND p.productCode = :productCode")
+    Optional<Long> findHoldingQuantity(String cano, String productCode);
+
 }

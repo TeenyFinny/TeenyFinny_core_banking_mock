@@ -43,6 +43,9 @@ public class CoreUserIdFilter extends OncePerRequestFilter {
 
         if ("/core/banking/init".equals(uri)) return true;
         if (uri.startsWith("/test/")) return true;
+        if (uri.equals("/actuator") || uri.startsWith("/actuator/")) {
+            return true;
+        }
 
         return false;
     }

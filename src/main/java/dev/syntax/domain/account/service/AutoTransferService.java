@@ -3,13 +3,12 @@ package dev.syntax.domain.account.service;
 import dev.syntax.domain.account.dto.AllowanceUpdateAutoTransferReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateReq;
 import dev.syntax.domain.account.dto.AutoTransferCreateRes;
+import dev.syntax.domain.account.dto.GoalAutoTransferCreateReq;
 import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.AutoTransfer;
 import dev.syntax.domain.account.util.AutoTransferDateCalculator;
-import dev.syntax.domain.user.entity.CoreUser;
 import dev.syntax.global.exception.BusinessException;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -45,6 +44,19 @@ public interface AutoTransferService {
     AutoTransferCreateRes createAutoTransfer(
             Long userId,
             AutoTransferCreateReq req
+    );
+
+    /**
+     * 부모가 자녀의 목표 계좌로 자동이체를 등록합니다.
+     *
+     * <p>
+     * - parentCoreId: 현재 로그인한 부모의 CoreUser ID (헤더에서 주입)<br>
+     * - childCoreId: 자동이체 대상이 되는 자녀의 CoreUser ID (body에서 전달)
+     * </p>
+     */
+    AutoTransferCreateRes createChildGoalAutoTransfer(
+            Long parentCoreId,
+            GoalAutoTransferCreateReq req
     );
 
     /**
@@ -86,7 +98,7 @@ public interface AutoTransferService {
 
     UpdateAutoTransferDayRes updateAutoTransferDay(Long userId, Long autoTransferId, Integer payDay);
 
-     /**
+    /**
      * 자동이체를 삭제합니다.
      *
      * <p>
@@ -123,3 +135,4 @@ public interface AutoTransferService {
      */
     void deleteAutoTransfer(Long userId, Long autoTransferId);
 }
+

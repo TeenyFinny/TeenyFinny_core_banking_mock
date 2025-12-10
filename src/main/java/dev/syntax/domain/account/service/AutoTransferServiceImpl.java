@@ -6,18 +6,23 @@ import dev.syntax.domain.account.dto.AutoTransferCreateRes;
 import dev.syntax.domain.account.dto.UpdateAutoTransferDayRes;
 import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.account.entity.AutoTransfer;
+import dev.syntax.domain.account.enums.AccountStatus;
+import dev.syntax.domain.account.enums.AccountType;
 import dev.syntax.domain.account.enums.AutoTransferStatus;
 import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.account.repository.AutoTransferRepository;
 import dev.syntax.domain.account.util.AutoTransferDateCalculator;
+import dev.syntax.domain.account.dto.GoalAutoTransferCreateReq;
+import dev.syntax.domain.goal.client.ChannelGoalClient;
+import dev.syntax.domain.goal.dto.GoalDepositEventReq;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.user.entity.CoreUser;
+import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
 import dev.syntax.domain.user.repository.CoreUserRepository;
 import dev.syntax.global.exception.BusinessException;
-import dev.syntax.global.response.error.ErrorBaseCode;
 import dev.syntax.global.response.error.ErrorAuthCode;
-import dev.syntax.domain.user.repository.CoreUserRelationshipRepository;
+import dev.syntax.global.response.error.ErrorBaseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-
 /**
  * {@link AutoTransferService}의 구현체
  * <p>
@@ -43,6 +47,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AutoTransferServiceImpl implements AutoTransferService {
 
+    private final ChannelGoalClient channelGoalClient;
     private final AutoTransferRepository autoTransferRepository;
     private final AccountRepository accountRepository;
     private final CoreUserRepository coreUserRepository;
@@ -63,19 +68,90 @@ public class AutoTransferServiceImpl implements AutoTransferService {
             Long userId,
             AutoTransferCreateReq req
     ) {
+        log.info("[AUTO-TRANSFER CREATE] userId={}, req={}", userId, req);
         Account from = accountRepository.findById(req.fromAccountId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND)); // 출금 계좌 없음
+                .orElseThrow(() -> {
+                    log.error("[AUTO-TRANSFER CREATE FAIL] 출금 계좌 없음. fromAccountId={}", req.fromAccountId());
+                    return new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND);
+                });
         Account to = accountRepository.findById(req.toAccountId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND)); // 입금 계좌 없음
+                .orElseThrow(() -> {
+                    log.error("[AUTO-TRANSFER CREATE FAIL] 입금 계좌 없음. toAccountId={}", req.toAccountId());
+                    return new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND);
+                });
 
+        // 권한 검증
+        boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, req.userId());
+        if (!isParent) {
+            log.error("[AUTO-TRANSFER CREATE FAIL] 부모-자녀 관계 없음. userId={}, childId={}", userId, req.userId());
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        }
+
+        // 해당 타입(toAccount의 타입)으로 이미 자동이체가 존재하는지 검증
+        if (autoTransferRepository.existsByUserIdAndToAccount_Type(userId, to.getType())) {
+            log.error("[AUTO-TRANSFER CREATE FAIL] 이미 자동이체가 존재함. userId={}, toAccountType={}", userId, to.getType());
+            throw new BusinessException(ErrorBaseCode.CONFLICT);
+        }
         CoreUser user = coreUserRepository.findByChannelUserId(req.userId())
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND)); // 사용자 없음
+                .orElseThrow(() -> {
+                    log.error("[AUTO-TRANSFER CREATE FAIL] 사용자 없음. userId={}", req.userId());
+                    return new BusinessException(ErrorBaseCode.USER_NOT_FOUND);
+                });
+
         AutoTransfer transfer = AutoTransfer.builder()
                 .fromAccount(from)
                 .toAccount(to)
                 .user(user)
                 .amount(req.amount())
                 .memo(req.memo())
+                .transferDay(req.transferDay())
+                .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
+                .status(AutoTransferStatus.PROCESSING)
+                .build();
+
+        autoTransferRepository.save(transfer);
+        log.info("[AUTO-TRANSFER CREATE SUCCESS] autoTransferId={}, userId={}", transfer.getId(), userId);
+
+        return new AutoTransferCreateRes(transfer.getId());
+    }
+
+    /**
+     * 부모가 자녀의 용돈 계좌(ALLOWANCE)에서 자녀의 활성 목표 계좌(GOAL, ACTIVE)로
+     * 자동이체를 등록합니다.
+     */
+    @Transactional
+    @Override
+    public AutoTransferCreateRes createChildGoalAutoTransfer(
+            Long parentCoreId,
+            GoalAutoTransferCreateReq req
+    ) {
+        Long childCoreId = req.childCoreId();
+
+        // 1) 부모-자녀 관계 검증
+        boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(parentCoreId, childCoreId);
+        if (!isParent) {
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        }
+
+        // 2) 자녀 CoreUser 조회
+        CoreUser child = coreUserRepository.findById(childCoreId)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
+
+        // 3) 자녀 용돈 계좌(ALLOWANCE) 조회
+        Account allowance = accountRepository.findFirstByUserIdAndType(child.getId(), AccountType.ALLOWANCE)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.WITHDRAWAL_NOT_FOUND));
+
+        // 4) 자녀 활성 목표 계좌(GOAL, ACTIVE) 조회
+        Account goal = accountRepository.findFirstByUserIdAndTypeAndStatus(child.getId(), AccountType.GOAL, AccountStatus.ACTIVE)
+                .orElseThrow(() -> new BusinessException(ErrorBaseCode.DEPOSIT_NOT_FOUND));
+
+        // 5) AutoTransfer 엔티티 생성
+        AutoTransfer transfer = AutoTransfer.builder()
+                .fromAccount(allowance)
+                .toAccount(goal)
+                .user(child)
+                .amount(req.amount())
+                .memo("GOAL: " + goal.getProductName())
                 .transferDay(req.transferDay())
                 .nextTransferDay(AutoTransferDateCalculator.getNextTransferDate(req.transferDay()))
                 .status(AutoTransferStatus.PROCESSING)
@@ -129,10 +205,32 @@ public class AutoTransferServiceImpl implements AutoTransferService {
             // (상태 + 다음 실행일) → REQUIRES_NEW 트랜잭션으로 별도 반영
             updateStatusAndNextDate(t, AutoTransferStatus.SUCCESS);
 
-        } catch (RuntimeException e) {
+            Account targetAccount = t.getToAccount();
+            if (targetAccount.getType().equals(AccountType.GOAL)) {
+                GoalDepositEventReq req = GoalDepositEventReq.builder()
+                        .accountNo(targetAccount.getNumber())
+                        .balanceAfter(targetAccount.getBalance())
+                        .build();
+
+                try {
+                    channelGoalClient.sendGoalDepositEvent(req);
+                } catch (Exception e) {
+                    log.error("목표 계좌 입금 이벤트 전송 실패. 계좌번호: {}", targetAccount.getNumber(), e);
+                }
+            }
+
+
+        } catch (BusinessException e) {
 
             // 출금/입금 중 오류 발생 시 FAIL 상태 저장
             updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
+
+            // 스케줄러에서 failCount++ 되도록 예외를 다시 던짐
+            throw e;
+        } catch (Exception e) {
+            // 예상치 못한 전역 오류 처리
+            updateStatusAndNextDate(t, AutoTransferStatus.FAIL);
+            throw e;
         }
     }
 
@@ -144,7 +242,7 @@ public class AutoTransferServiceImpl implements AutoTransferService {
      * 자동이체 실패가 반복 실행되는 문제를 방지하는 핵심 포인트입니다.</p>
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void updateStatusAndNextDate(AutoTransfer t, AutoTransferStatus status) {
+    public void updateStatusAndNextDate(AutoTransfer t, AutoTransferStatus status) {
 
         // 상태 변경 (SUCCESS / FAIL)
         t.setStatus(status);
@@ -194,19 +292,18 @@ public class AutoTransferServiceImpl implements AutoTransferService {
 @Transactional
 @Override
 public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, Long autoTransferId) {
-
+    log.info("[AUTO-TRANSFER UPDATE] userId={}, transferId={}, req={}", userId, autoTransferId, req);
     // 1) 자동이체 조회
     AutoTransfer transfer = autoTransferRepository.findById(autoTransferId)
-        .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
-
+            .orElseThrow(() -> {
+                log.error("[AUTO-TRANSFER UPDATE FAIL] 자동이체 없음. transferId={}", autoTransferId);
+                return new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND);
+            });
     // 2) 권한 검증 — 자동이체 소유자 또는 부모만 허용
-    CoreUser owner = transfer.getUser();
-
-    if (!userId.equals(owner.getId())) {
-        boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, owner.getId());
-        if (!isParent) {
-            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
-        }
+    boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, transfer.getUser().getId());
+    if (!isParent) {
+        log.error("[AUTO-TRANSFER UPDATE FAIL] 권한 없음. userId={}, childId={}", userId, transfer.getUser().getId());
+        throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
     }
 
     // 3) 자동이체 정보 업데이트 (다음 이체일 포함)
@@ -215,7 +312,7 @@ public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, 
         req.transferDay(),
         AutoTransferDateCalculator.getNextTransferDate(req.transferDay())
     );
-
+    log.info("[AUTO-TRANSFER UPDATE SUCCESS] transferId={}", autoTransferId);
 }
 
     /**
@@ -283,14 +380,27 @@ public void updateAutoTransfer(Long userId, AllowanceUpdateAutoTransferReq req, 
     @Override
     @Transactional
     public void deleteAutoTransfer(Long userId, Long autoTransferId) {
+        log.info("[AUTO-TRANSFER DELETE] userId={}, transferId={}", userId, autoTransferId);
 
         CoreUser user = coreUserRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.USER_NOT_FOUND));
-
+                .orElseThrow(() -> {
+                    log.error("[AUTO-TRANSFER DELETE FAIL] 사용자 없음. userId={}", userId);
+                    return new BusinessException(ErrorBaseCode.USER_NOT_FOUND);
+                });
         AutoTransfer autoTransfer = autoTransferRepository.findById(autoTransferId)
-                .orElseThrow(() -> new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("[AUTO-TRANSFER DELETE FAIL] 자동이체 없음. transferId={}", autoTransferId);
+                    return new BusinessException(ErrorBaseCode.AUTO_TRANSFER_NOT_FOUND);
+                });
+        // 1) 부모-자녀 관계 검증
+        boolean isParent = relationshipRepository.existsByParent_IdAndChild_Id(userId, autoTransfer.getUser().getId());
+        if (!isParent) {
+            log.error("[AUTO-TRANSFER DELETE FAIL] 권한 없음. userId={}, childId={}", userId, autoTransfer.getUser().getId());
+            throw new BusinessException(ErrorAuthCode.ACCESS_DENIED);
+        }
 
         autoTransferRepository.delete(autoTransfer);
+        log.info("[AUTO-TRANSFER DELETE SUCCESS] transferId={}", autoTransferId);
     }
 
 }

@@ -160,6 +160,7 @@ public class InvestPortfolioServiceImpl implements InvestPortfolioService {
 
         // 총 자산 = 예수금 + 총 평가금액
         long totalAssetAmount = BigDecimal.valueOf(account.getDepositAmount()).add(totalEvalAmount).longValue();
+
         // 최종 계산 결과 전달
         return InvestPortfolioCalcResult.builder()
                 .userId(userId)

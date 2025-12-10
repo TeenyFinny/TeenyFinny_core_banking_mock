@@ -29,7 +29,7 @@ public class InvestTradeOrderController {
                 req.getProductCode(),
                 req.getProductName(),
                 req.getQuantity(),
-                req.getPrice()
+                Long.parseLong(req.getPrice().replaceAll(",", ""))
         );
 
         return InvestTradeOrderRes.from(order);
@@ -47,7 +47,7 @@ public class InvestTradeOrderController {
                 req.getProductCode(),
                 req.getProductName(),
                 req.getQuantity(),
-                req.getPrice()
+                Long.parseLong(req.getPrice().replaceAll(",", ""))
         );
 
         return InvestTradeOrderRes.from(order);

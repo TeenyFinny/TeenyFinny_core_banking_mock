@@ -7,6 +7,8 @@ import dev.syntax.domain.goal.service.GoalAccountService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
  * <p>
  * 코어 뱅킹 서비스에서 목표 계좌를 생성하는 API를 제공합니다.
  */
+@Slf4j
 @RestController
 @RequestMapping("/core/banking/goal/account")
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class GoalAccountController {
      * @param req    목표 계좌 생성 요청 정보 (목표 이름)
      * @return 생성된 목표 계좌 정보
      */
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AccountItemRes createGoalAccount(

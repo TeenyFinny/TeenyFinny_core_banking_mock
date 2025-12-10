@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.Setter;
 
 /**
  * 계좌 엔티티
@@ -95,5 +96,9 @@ public class Account extends BaseTimeEntity {
 
     public void updateStatus(AccountStatus status) {
         this.status = status;
+    }
+
+    public void syncBalance(BigDecimal newBalance) {
+        this.balance = newBalance;
     }
 }

@@ -1,5 +1,8 @@
 package dev.syntax.domain.investment.service;
 
+import dev.syntax.domain.account.entity.Account;
+import dev.syntax.domain.account.enums.AccountType;
+import dev.syntax.domain.account.repository.AccountRepository;
 import dev.syntax.domain.investment.entity.InvestAccount;
 import dev.syntax.domain.investment.entity.InvestPortfolio;
 import dev.syntax.domain.investment.entity.TradeOrder;
@@ -10,6 +13,7 @@ import dev.syntax.domain.investment.repository.InvestPortfolioRepository;
 import dev.syntax.domain.investment.repository.InvestTradeOrderRepository;
 import dev.syntax.global.exception.BusinessException;
 import dev.syntax.global.response.error.ErrorInvestmentCode;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +26,8 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
 
     private final InvestTradeOrderRepository investTradeOrderRepository;
     private final InvestPortfolioRepository investPortfolioRepository;
-    private final InvestAccountRepository accountRepository;
+    private final InvestAccountRepository investAccountRepository;
+    private final AccountRepository coreAccountRepository;
 
     /**
      * 매수 주문 처리
@@ -39,6 +44,7 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
             long quantity,         // ord_qty (BIGINT)
             long price            // ord_unpr (BIGINT)
     ) {
+        validateOrder(quantity, price);
         InvestAccount account = getAccount(cano, userId);
 
         long totalCost = quantity * price; // 주문 금액 = 수량 * 단가
@@ -67,7 +73,6 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
 
         // 4. 예수금 차감 (dnca_tot_amt)
         account.withdraw(totalCost);
-        accountRepository.save(account);
 
         // 5. 거래내역 저장 (baas_trade_orders)
         TradeOrder order = TradeOrder.builder()
@@ -81,8 +86,10 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
                 .quantity(quantity)
                 .price(price)
                 .exchangeDivisionCode("KRX")  // excg_id_dvsn_cd, 필요시 파라미터로
-                .status(OrderStatus.REQUESTED)
+                .status(OrderStatus.EXECUTED)
                 .build();
+
+        syncShadowAccount(userId, account);
 
         return investTradeOrderRepository.save(order);
     }
@@ -102,6 +109,8 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
             long quantity,
             long price
     ) {
+        validateOrder(quantity, price);
+
         InvestAccount account = getAccount(cano, userId);
 
         // 1. 포트폴리오 존재/보유수량 확인
@@ -115,12 +124,17 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
 
         // 2. 보유수량 감소
         portfolio.reduceHolding(quantity);
-        investPortfolioRepository.save(portfolio);
 
-        // 3. 예수금 증가 (매도 금액 만큼 dnca_tot_amt 증가)
+        // 3. 보유수량이 0이면 삭제
+        if (portfolio.getHoldingQuantity() == 0) {
+            investPortfolioRepository.delete(portfolio);
+        } else {
+            investPortfolioRepository.save(portfolio); // 0이 아닐 때만 업데이트
+        }
+
+        // 4. 예수금 증가 (매도 금액 만큼 dnca_tot_amt 증가)
         long revenue = quantity * price;
         account.deposit(revenue);
-        accountRepository.save(account);
 
         // 4. 거래내역 저장
         TradeOrder order = TradeOrder.builder()
@@ -134,20 +148,38 @@ public class InvestTradeOrderServiceImpl implements InvestTradeOrderService {
                 .quantity(quantity)
                 .price(price)
                 .exchangeDivisionCode("KRX")
-                .status(OrderStatus.REQUESTED)
+                .status(OrderStatus.EXECUTED)
                 .build();
+
+        syncShadowAccount(userId, account);
 
         return investTradeOrderRepository.save(order);
     }
 
     /**
+     * 새로운 주문 입력 검증
+     */
+    private void validateOrder(long quantity, long price) {
+        if (quantity <= 0 || price <= 0) {
+            throw new BusinessException(ErrorInvestmentCode.INVALID_ORDER);
+        }
+    }
+    /**
      * 계좌 존재 여부 + user_id 검증
      */
     private InvestAccount getAccount(String cano, Long userId) {
-        return accountRepository.findById(cano)
+        return investAccountRepository.findWithLockByCano(cano)
                 .filter(acc -> acc.getUserId().equals(userId))
-                .orElseThrow(() ->
-                        new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND)
-                );
+                .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND));
+    }
+
+    /**
+     * core_account의 balance(잔액)과 동기화
+     */
+    private void syncShadowAccount(Long userId, InvestAccount investAccount) {
+        Account core = coreAccountRepository
+                .findByUserIdWithPessimisticLock(userId, AccountType.INVESTMENT)
+                .orElseThrow(() -> new BusinessException(ErrorInvestmentCode.ACCOUNT_NOT_FOUND));
+        core.syncBalance(BigDecimal.valueOf(investAccount.getDepositAmount()));
     }
 }

@@ -82,6 +82,7 @@ public class InitServiceImpl implements InitService {
         // 계좌 정보를 AccountItemRes로 변환
         AccountItemRes accountRes = AccountItemRes.from(newAccount);
 
+        log.info("[CORE] 부모 계좌 생성 완료: userCoreId={}, userChannelId={}, accountType={}", user.getId(), user.getChannelUserId(), accountRes.accountType());
         // 반환
         return ParentUserInitRes.from(user, accountRes);
     }
@@ -123,6 +124,7 @@ public class InitServiceImpl implements InitService {
                 .birthDate(req.birthDate())
                 .build();
 
+        log.info("[CORE] USER 생성 완료: coreUserId={}, channelUserId={}", user.getId(), req.channelUserId());
         return coreUserRepository.save(user);
     }
 

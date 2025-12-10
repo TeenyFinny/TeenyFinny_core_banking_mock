@@ -1,6 +1,5 @@
 package dev.syntax.domain.account.service;
 
-import dev.syntax.domain.account.entity.Account;
 import dev.syntax.domain.transaction.enums.TransactionCategory;
 import dev.syntax.domain.transaction.enums.TransactionCode;
 import dev.syntax.domain.transaction.enums.TransactionType;

@@ -8,5 +8,5 @@ public class BuyReq {
     private String productCode;
     private String productName;
     private long quantity;
-    private long price;
+    private String price;
 }

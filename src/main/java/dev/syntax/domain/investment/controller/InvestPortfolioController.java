@@ -1,30 +1,38 @@
 package dev.syntax.domain.investment.controller;
 
 import dev.syntax.domain.investment.dto.res.InvestPortfolioRes;
-import dev.syntax.domain.investment.service.InvestPortfolioService;
+import dev.syntax.domain.investment.dto.res.PortfolioDateRes;
+import dev.syntax.domain.investment.service.MonthlyPortfolioService;
 import dev.syntax.global.auth.annotation.CurrentUserId;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/core/investments/portfolio")
 @RequiredArgsConstructor
-@RequestMapping("/investments/portfolio")
 public class InvestPortfolioController {
+    private final MonthlyPortfolioService monthlyService;
 
-    private static final String CORE_USER_ID_HEADER = "X-Core-User-Id";
-    private final InvestPortfolioService portfolioService;
-
-    /** 1. 포트폴리오 상세 조회 */
-    @GetMapping("/{cano}") // cno 나중에 빼기
-    public InvestPortfolioRes getPortfolio(
-            @PathVariable String cano,
-            @CurrentUserId Long userId // 헤더에서 추출로 변경
+    @GetMapping("/dates")
+    public List<PortfolioDateRes> getAvailableDates(
+            @CurrentUserId Long userId,
+            @RequestParam String cano
     ) {
-        return portfolioService.getPortfolio(cano, userId);
+        return monthlyService.getAvailableDates(cano, userId);
     }
 
 
+    @GetMapping
+    public InvestPortfolioRes getMonthlyPortfolio(
+            @CurrentUserId Long userId,
+            @RequestParam String cano,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        return monthlyService.getMonthlyPortfolio(cano, userId, year, month);
+    }
 }
